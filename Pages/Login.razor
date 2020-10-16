@@ -1,0 +1,49 @@
+﻿@page "/login"
+@layout LoginLayout
+@using Web_Onboard.Data
+@inject NavigationManager navigationManager
+
+<h3>Login</h3>
+
+<form id="frmMain" runat="server" style="background-color: #eee; height: 100%; width: 100%;">
+    <div style="width: 400px; height: 500px; margin: auto;">
+        <h1 style="color: #555; font-weight: 100; letter-spacing: 4px; vertical-align: top;">
+            <img src="Images/cp-ma-logo.png" style="height: 40px; margin-bottom: -10px;" alt="CP-MA" />
+            Web-Onboard
+        </h1>
+        <EditForm Model="@user" OnValidSubmit="@ValidateUser">
+            <div style="width: 90%; padding: 5%; background-color: #fff; text-align: left;">
+                <asp:Label ID="lblResults" runat="server" Visible="false" style="margin: 0 0 20px 0;" Text="results"></asp:Label>
+                <div class="label">User Name</div>
+                <InputText ID="txtUN" placeholder="User Name" @bind-Value=user.username autocomplete="off"  style="margin: 0; width: 100%; padding: 2px 0;" />
+                <br />
+                <div class="label">Password</div>
+                <InputText ID="txtPass" placeholder="Password" @bind-Value=user.password autocomplete="off"  style="margin: 0; width: 100%; padding: 2px 0;" />
+                <br />
+                <table style="width: 100%;">
+                    <tr>
+                        <td style="text-align: left;">
+                            <InputCheckbox type="checkbox" id="addition" name="rememberMe" @bind-Value=user.remember />
+                            Remember Me
+                        </td>
+                        <td style="text-align: right;">
+                            <a href="?">Forgot password?</a>
+                        </td>
+                    </tr>
+                </table>
+                <br />
+                <input type="submit" value="Login" style="margin: 0; width: 100%; padding: 12px 0; font-size: 18px;"/>
+            </div>
+        </EditForm>
+    </div>
+</form>
+
+@code {
+    private User user = new User();
+
+    private void ValidateUser()
+    {
+        Console.WriteLine("hello");
+        navigationManager.NavigateTo("/dashboard");
+    }
+}

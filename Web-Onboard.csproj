@@ -7,6 +7,50 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="3.1.4" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="4.7.0" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\Images\booklet_edit_light.png" />
+    <None Include="wwwroot\Images\booklet_light.png" />
+    <None Include="wwwroot\Images\business_man.png" />
+    <None Include="wwwroot\Images\business_man_light.png" />
+    <None Include="wwwroot\Images\calendar.png" />
+    <None Include="wwwroot\Images\calendar_daily.png" />
+    <None Include="wwwroot\Images\calendar_edit_light.png" />
+    <None Include="wwwroot\Images\calendar_light.png" />
+    <None Include="wwwroot\Images\calendar_pile.png" />
+    <None Include="wwwroot\Images\calendar_weekly.png" />
+    <None Include="wwwroot\Images\chart.png" />
+    <None Include="wwwroot\Images\chart_light.png" />
+    <None Include="wwwroot\Images\check.png" />
+    <None Include="wwwroot\Images\cp-ma-logo.png" />
+    <None Include="wwwroot\Images\dashboard.png" />
+    <None Include="wwwroot\Images\delete.png" />
+    <None Include="wwwroot\Images\delete_filled.png" />
+    <None Include="wwwroot\Images\download.png" />
+    <None Include="wwwroot\Images\earth.png" />
+    <None Include="wwwroot\Images\edit.png" />
+    <None Include="wwwroot\Images\error.png" />
+    <None Include="wwwroot\Images\event.png" />
+    <None Include="wwwroot\Images\event_light.png" />
+    <None Include="wwwroot\Images\favicon.png" />
+    <None Include="wwwroot\Images\home-background.jpg" />
+    <None Include="wwwroot\Images\home.png" />
+    <None Include="wwwroot\Images\home_dark.png" />
+    <None Include="wwwroot\Images\laptop.png" />
+    <None Include="wwwroot\Images\lines.png" />
+    <None Include="wwwroot\Images\list.png" />
+    <None Include="wwwroot\Images\lock.png" />
+    <None Include="wwwroot\Images\page.png" />
+    <None Include="wwwroot\Images\page_light.png" />
+    <None Include="wwwroot\Images\printer.png" />
+    <None Include="wwwroot\Images\save_light.png" />
+    <None Include="wwwroot\Images\search.png" />
+    <None Include="wwwroot\Images\settings.png" />
+    <None Include="wwwroot\Images\settings_light.png" />
+    <None Include="wwwroot\Images\warning.png" />
   </ItemGroup>
 
 </Project>
