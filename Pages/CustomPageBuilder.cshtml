@@ -1,0 +1,86 @@
+﻿@page "/custompagebuilder"
+@namespace Web_Onboard.Shared
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model Web_Onboard.Pages.CustomPageBuilderModel
+@{
+    ViewData["Title"] = "Custom Page Builder";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Web-Onboard</title>
+    <base href="/" />
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link href="css/site.css" rel="stylesheet" />
+    <link rel="icon" href="favicon.png" />
+
+    <script src="https://cdn.quilljs.com/1.1.3/quill.js"></script>
+    <script src="https://cdn.quilljs.com/1.1.3/quill.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+    <link href="https://cdn.quilljs.com/1.1.3/quill.snow.css" rel="stylesheet" />
+    <link href="https://cdn.quilljs.com/1.1.3/quill.bubble.css" rel="stylesheet" />
+</head>
+<body>
+    <app>
+        <div class="sidebar">
+            <component type="typeof(NavMenu)" render-mode="ServerPrerendered" />
+        </div>
+
+        <div class="main">
+            <div class="top-row px-4">
+            </div>
+
+            <div class="content px-4">
+                <h3>Custom Page Builder</h3>
+                <div id="toolbar"></div>
+                <div id="editor"></div>
+            </div>
+        </div>
+    </app>
+
+    <div id="blazor-error-ui">
+        <environment include="Staging,Production">
+            An error has occurred. This application may no longer respond until reloaded.
+        </environment>
+        <environment include="Development">
+            An unhandled exception has occurred. See browser dev tools for details.
+        </environment>
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+
+    <script src="_framework/blazor.server.js"></script>
+    <script>
+        var toolbarOptions = [
+            ['bold', 'italic', 'underline', 'strike'],        // toggled buttons
+            ['blockquote', 'code-block'],
+
+            [{ 'header': 1 }, { 'header': 2 }],               // custom button values
+            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+            [{ 'script': 'sub' }, { 'script': 'super' }],      // superscript/subscript
+            [{ 'indent': '-1' }, { 'indent': '+1' }],          // outdent/indent
+            [{ 'direction': 'rtl' }],                         // text direction
+
+            [{ 'size': ['small', false, 'large', 'huge'] }],  // custom dropdown
+            [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+
+            [{ 'color': [] }, { 'background': [] }],          // dropdown with defaults from theme
+            [{ 'font': [] }],
+            [{ 'align': [] }],
+
+            ['clean']                                         // remove formatting button
+        ];
+        var quill = new Quill('#editor', {
+            modules: {
+                toolbar: toolbarOptions
+            },
+            theme: 'snow'
+        });
+    </script>
+</body>
+</html>

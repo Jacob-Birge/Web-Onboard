@@ -15,10 +15,10 @@
             <div style="width: 90%; padding: 5%; background-color: #fff; text-align: left;">
                 <asp:Label ID="lblResults" runat="server" Visible="false" style="margin: 0 0 20px 0;" Text="results"></asp:Label>
                 <div class="label">User Name</div>
-                <InputText ID="txtUN" placeholder="User Name" @bind-Value=user.username autocomplete="off"  style="margin: 0; width: 100%; padding: 2px 0;" />
+                <InputText ID="txtUN" placeholder="User Name" @bind-Value=user.username autocomplete="off" style="margin: 0; width: 100%; padding: 2px 0;" />
                 <br />
                 <div class="label">Password</div>
-                <InputText ID="txtPass" placeholder="Password" @bind-Value=user.password autocomplete="off"  style="margin: 0; width: 100%; padding: 2px 0;" />
+                <InputText ID="txtPass" placeholder="Password" @bind-Value=user.password autocomplete="off" style="margin: 0; width: 100%; padding: 2px 0;" />
                 <br />
                 <table style="width: 100%;">
                     <tr>
@@ -32,7 +32,7 @@
                     </tr>
                 </table>
                 <br />
-                <input type="submit" value="Login" style="margin: 0; width: 100%; padding: 12px 0; font-size: 18px;"/>
+                <input type="submit" value="Login" style="margin: 0; width: 100%; padding: 12px 0; font-size: 18px;" />
             </div>
         </EditForm>
     </div>
@@ -40,6 +40,7 @@
 
 @code {
     private User user = new User();
+    private String richText;
 
     private void ValidateUser()
     {
