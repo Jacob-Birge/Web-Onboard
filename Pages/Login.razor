@@ -1,21 +1,22 @@
 ﻿@page "/login"
 @layout LoginLayout
 @using Web_Onboard.Data
+@using System.Data
 @inject NavigationManager navigationManager
 
 <h3>Login</h3>
 
-<form id="frmMain" runat="server" style="background-color: #eee; height: 100%; width: 100%;">
+<div id="frmMain" style="background-color: #eee; height: 100%; width: 100%;">
     <div style="width: 400px; height: 500px; margin: auto;">
         <h1 style="color: #555; font-weight: 100; letter-spacing: 4px; vertical-align: top;">
             <img src="Images/cp-ma-logo.png" style="height: 40px; margin-bottom: -10px;" alt="CP-MA" />
             Web-Onboard
         </h1>
-        <EditForm Model="@user" OnValidSubmit="@ValidateUser">
-            <div style="width: 90%; padding: 5%; background-color: #fff; text-align: left;">
-                <asp:Label ID="lblResults" runat="server" Visible="false" style="margin: 0 0 20px 0;" Text="results"></asp:Label>
-                <div class="label">User Name</div>
-                <InputText ID="txtUN" placeholder="User Name" @bind-Value=user.username autocomplete="off" style="margin: 0; width: 100%; padding: 2px 0;" />
+        <div style="width: 90%; padding: 5%; background-color: #fff; text-align: left;">
+            <EditForm Model="@user" OnValidSubmit="@ValidateUser">
+                <DataAnnotationsValidator />
+                <label for="txtUN" class="label">User Name</label>
+                <InputText MinLength="50" ID="txtUN" placeholder="User Name" @bind-Value=user.username autocomplete="off" style="margin: 0; width: 100%; padding: 2px 0;" />
                 <br />
                 <div class="label">Password</div>
                 <InputText ID="txtPass" placeholder="Password" @bind-Value=user.password autocomplete="off" style="margin: 0; width: 100%; padding: 2px 0;" />
@@ -32,18 +33,34 @@
                     </tr>
                 </table>
                 <br />
-                <input type="submit" value="Login" style="margin: 0; width: 100%; padding: 12px 0; font-size: 18px;" />
-            </div>
-        </EditForm>
+                <input type="submit" value="Login" class="btn btn-primary" style="margin: 0; width: 100%; padding: 12px 0; font-size: 18px;" />
+            </EditForm>
+        </div>
     </div>
-</form>
+</div>
 
 @code {
     private User user = new User();
-    private String richText;
 
-    private void ValidateUser()
+    protected async Task ValidateUser()
     {
-        navigationManager.NavigateTo("/dashboard");
+        DataTable dt = Functions.GetDataTableFromSQL("SELECT [id] FROM [users] WHERE [user_name] = '" + user.username + "' AND [password] = '" + user.password + "'");
+
+        if (dt.Rows.Count > 0)
+        {
+            //Session["user_id"] = dt.Rows[0]["id"];
+            //Session["user_name"] = Functions.GetUserName((int)Session["user_id"]);
+            //Session["role_id"] = Functions.GetRoleID((int)Session["user_id"]);
+            //Session["user_id"] = Functions.GetCompanyID((int)Session["user_id"]);
+
+            //Response.Redirect("Dashboard.aspx", true);
+            navigationManager.NavigateTo("/dashboard");
+        }
+        else
+        {
+            //lblResults.Text = "<img src='/Media/Images/error.png' /> User information invalid. " + DateTime.Now.ToLocalTime().ToString("h:mm:ss tt");
+            //lblResults.CssClass = "result-box error-box";
+            //lblResults.Visible = true;
+        }
     }
 }

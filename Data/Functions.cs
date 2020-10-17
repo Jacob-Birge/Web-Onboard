@@ -4,13 +4,13 @@ using System.Linq;
 using System.Web;
 using System.Data;
 using System.Data.SqlClient;
-using System.Configuration;
+using Microsoft.Extensions.Configuration;
 
-namespace WBOA_ASP.Functions
+namespace Web_Onboard.Data
 {
     public class Functions
     {
-        public static string strConn = ConfigurationManager.ConnectionStrings["conn_str"].ConnectionString;
+        public static string strConn = Startup.Configuration.GetConnectionString("conn_str");
         public const string app_version = "1.0.0";
 
 
