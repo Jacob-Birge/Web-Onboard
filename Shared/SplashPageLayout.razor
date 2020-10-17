@@ -1,4 +1,5 @@
 ﻿@inherits LayoutComponentBase
+@inject NavigationManager navigationManager
 
 <div class="main">
     <div class="top-row px-4">
@@ -8,8 +9,8 @@
                 Web-Onboard
             </a>
         </div>
-        <div style="float:right; margin-top: 1rem; margin-bottom: 1rem;">
-            <a href="/login">Login</a>
+        <div style="float:right; margin-top: .5rem; margin-bottom: 1rem;">
+            <button class="btn btn-primary" @onclick='@(e => ButtonReroute("/login"))'>Login</button>
         </div>
     </div>
 
@@ -17,3 +18,10 @@
         @Body
     </div>
 </div>
+
+@code {
+    private void ButtonReroute(String path)
+    {
+        navigationManager.NavigateTo(path);
+    }
+}

@@ -1,8 +1,54 @@
 ﻿@page "/"
 @layout SplashPageLayout
+@inject NavigationManager navigationManager
 
-<h1>Hello, world!</h1>
+<div id="main_demo">
+    <div id="demo-text">
+        <h1 style="margin-top: 0; margin-bottom: 40px; color: #eee">On-Boarding Made Simple!</h1>
+        <p style="font-size: 18px; color: #999; text-indent: 20px;"><i>Modern. Intuitive. Easy to use.</i> Create professional a on-boarding system with <strong style="color: #3292FF;">Web-Onboard!</strong></p>
+        <p style="font-size: 18px; text-align: left; width: 800px; text-indent: 50px; line-height: 40px; padding: 20px 0;">We offer a professional, clean and efficient solution to employee on-boarding. With our ahead of the curve online system, you are able create employee workbooks from your own computer! You will then be able to grant portal access to new on-boardees or print out your schedules dynamically. Contact us today to find out just how simple our solution can be!</p>
+        <button class="btn btn-primary" @onclick='@(e => ButtonReroute("/dashboard"))'>Request a Demo</button>
+        <button class="btn btn-secondary" @onclick='@(e => ButtonReroute("/dashboard"))'>What is Web-Onboard?</button>
+    </div>
+</div>
+<div style="background-color: #fff; width: 100%; padding: 50px 12.5%; color: #888;">
+    <table id="main-icons">
+        <tr valign="top">
+            <td>
+                <a class="dbutton-2">
+                    <img src="Images/business_man.png" alt="Small Business" />
+                    <h2>Small Business</h2>
+                    <p>We are a <strong>small busniess</strong>. Which means you get the dedicated personal help and attention that your buseness needs. No robots, just people.</p>
+                </a>
+            </td>
+            <td>
+                <a class="dbutton-2">
+                    <img src="Images/lock.png" alt="Secure" />
+                    <h2>Secure</h2>
+                    <p>Security is our <strong>#1 priority</strong>. We do everything that we can to ensure the confidentiality of all data input and stored in our system.</p>
+                </a>
+            </td>
+            <td>
+                <a class="dbutton-2">
+                    <img src="Images/calendar.png" alt="Calendar" />
+                    <h2>Easy to Use</h2>
+                    <p>Our team of developers has designed everything to be as intuitive, and easy to use as possible, without sacrificing advanced functionallity.</p>
+                </a>
+            </td>
+            <td>
+                <a class="dbutton-2">
+                    <img src="Images/event.png" alt="Business Meeting" />
+                    <h2>The First-Step</h2>
+                    <p>Start your new hire's first day off on the right foot. Giving them the primary <strong>vocational</strong> and <strong>personal</strong> needs to better the foundation of your company.</p>
+                </a>
+            </td>
+        </tr>
+    </table>
+</div>
 
-Welcome to your new app.
-
-<SurveyPrompt Title="How is Blazor working for you?" />
+@code {
+    private void ButtonReroute(String path)
+    {
+        navigationManager.NavigateTo(path);
+    }
+}

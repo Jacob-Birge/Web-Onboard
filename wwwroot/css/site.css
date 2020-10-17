@@ -22,6 +22,7 @@ app {
 
 .top-row {
     height: 3.5rem;
+    z-index: 1000;
 }
 
 .main {
@@ -43,6 +44,48 @@ app {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+#main {
+    margin-top: 0;
+}
+
+#main_demo {
+    background-image: url("/Images/home-background.jpg");
+    background-repeat: no-repeat;
+    background-size: cover;
+    width: 100%;
+    min-height: 450px;
+    padding: 20px 12.5%;
+    color: #ddd;
+    position: relative;
+}
+
+#demo-text {
+    background-color: rgba(0, 0, 0, 0.5);
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 50px 40px 50px 10%;
+    height: 100%;
+}
+
+#main-icons {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 0 auto;
+}
+
+    #main-icons tr {
+        display: table;
+    }
+
+    #main-icons td {
+        width: 25%;
+    }
+
+    #main-icons img{
+        width: 100%;
+    }
 
 .sidebar {
     background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
