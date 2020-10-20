@@ -18,7 +18,7 @@
             <EditForm Model="@user" OnValidSubmit="@ValidateUser">
                 <DataAnnotationsValidator />
                 <label for="txtUN" class="label">User Name</label>
-                <InputText MinLength="50" ID="txtUN" placeholder="User Name" @bind-Value=user.username autocomplete="off" style="margin: 0; width: 100%; padding: 2px 0;" />
+                <InputText ID="txtUN" placeholder="User Name" @bind-Value=user.username autocomplete="off" style="margin: 0; width: 100%; padding: 2px 0;" />
                 <br />
                 <div class="label">Password</div>
                 <InputText ID="txtPass" placeholder="Password" @bind-Value=user.password autocomplete="off" style="margin: 0; width: 100%; padding: 2px 0;" />
