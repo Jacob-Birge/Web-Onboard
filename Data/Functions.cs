@@ -22,6 +22,8 @@ namespace Web_Onboard.Data
             SqlDataAdapter da = new SqlDataAdapter(cmd);
             DataTable dt = new DataTable();
             da.Fill(dt);
+            con.Close();
+            da.Dispose();
             return dt;
         }
 

@@ -10,7 +10,14 @@
             </a>
         </div>
         <div style="float:right; margin-top: .5rem; margin-bottom: 1rem;">
-            <button class="btn btn-primary" @onclick='@(e => ButtonReroute("/login"))'>Login</button>
+            <AuthorizeView>
+                <Authorized>
+                    <button class="btn btn-primary" @onclick='@(e => ButtonReroute("/dashboard"))'>Dashboard</button>
+                </Authorized>
+                <NotAuthorized>
+                    <button class="btn btn-primary" @onclick='@(e => ButtonReroute("/login"))'>Login</button>
+                </NotAuthorized>
+            </AuthorizeView>
         </div>
     </div>
 

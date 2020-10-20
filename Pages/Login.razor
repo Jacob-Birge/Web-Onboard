@@ -3,6 +3,8 @@
 @using Web_Onboard.Data
 @using System.Data
 @inject NavigationManager navigationManager
+@inject AuthenticationStateProvider authenticationStateProvider
+@inject Blazored.SessionStorage.ISessionStorageService sessionStorage
 
 <h3>Login</h3>
 
@@ -42,19 +44,30 @@
 @code {
     private User user = new User();
 
-    protected async Task ValidateUser()
+    protected override async Task OnInitializedAsync()
     {
-        DataTable dt = Functions.GetDataTableFromSQL("SELECT [id] FROM [users] WHERE [user_name] = '" + user.username + "' AND [password] = '" + user.password + "'");
+        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity.IsAuthenticated)
+        {
+            navigationManager.NavigateTo("/dashboard");
+        }
+    }
+
+    protected async Task<bool> ValidateUser()
+    {
+        DataTable dt = Functions.GetDataTableFromSQL("SELECT [role_id] FROM [users] WHERE [user_name] = '" + user.username + "' AND [password] = '" + user.password + "'");
 
         if (dt.Rows.Count > 0)
         {
-            //Session["user_id"] = dt.Rows[0]["id"];
-            //Session["user_name"] = Functions.GetUserName((int)Session["user_id"]);
-            //Session["role_id"] = Functions.GetRoleID((int)Session["user_id"]);
-            //Session["user_id"] = Functions.GetCompanyID((int)Session["user_id"]);
+            int roleId = (int)(dt.Rows[0][0]);
+            ((CustomAuthenticationStateProvider)authenticationStateProvider).MarkUserAsAuthenticated(user.username, roleId);
 
-            //Response.Redirect("Dashboard.aspx", true);
             navigationManager.NavigateTo("/dashboard");
+
+            await sessionStorage.SetItemAsync("username", user.username);
+            await sessionStorage.SetItemAsync("role", roleId);
+
+            //System.Diagnostics.Debug.Print((dt.Rows[0][0]).ToString());
         }
         else
         {
@@ -62,5 +75,6 @@
             //lblResults.CssClass = "result-box error-box";
             //lblResults.Visible = true;
         }
+        return await Task.FromResult(true);
     }
 }

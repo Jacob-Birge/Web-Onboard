@@ -1,0 +1,15 @@
+﻿@page "/logout"
+@using Web_Onboard.Data
+@using System.Data
+@inject NavigationManager navigationManager
+@inject AuthenticationStateProvider authenticationStateProvider
+@inject Blazored.SessionStorage.ISessionStorageService sessionStorage
+
+@code {
+    protected override Task OnInitializedAsync()
+    {
+        ((CustomAuthenticationStateProvider)authenticationStateProvider).MarkUserAsLoggedOut();
+        navigationManager.NavigateTo("/");
+        return base.OnInitializedAsync();
+    }
+}

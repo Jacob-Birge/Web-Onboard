@@ -1,4 +1,5 @@
 ﻿@page "/schedulemanager"
+@attribute [Authorize(Roles = "Owner, Manger")]
 <h3>Schedule Manager</h3>
 
 @code {
