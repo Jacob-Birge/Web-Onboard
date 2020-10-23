@@ -1,7 +1,6 @@
 ﻿@page "/"
 @layout SplashPageLayout
 @inject NavigationManager navigationManager
-@using BlazorInputFile
 
 
 <div id="main_demo">
@@ -48,31 +47,9 @@
     </table>
 </div>
 
-<p>
-    <InputFile OnChange="@OnInputFileChange" multiple />
-</p>
-
-@if (file != null)
-{
-    <p>Name:@file.Name</p>
-    <p>Bytes:@file.Size</p>
-    <p>Type:@file.Type</p>
-    <p>Data:@file.Data</p>
-}
-
 @code {
     private void ButtonReroute(String path)
     {
         navigationManager.NavigateTo(path);
-    }
-
-    IFileListEntry file;
-
-    private async Task OnInputFileChange(IFileListEntry[] files)
-    {
-        file = files.FirstOrDefault();
-        if (file != null)
-        {
-        }
     }
 }
