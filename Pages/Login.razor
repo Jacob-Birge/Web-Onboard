@@ -17,6 +17,10 @@
         <div style="width: 90%; padding: 5%; background-color: #fff; text-align: left;">
             <EditForm Model="@user" OnValidSubmit="@ValidateUser">
                 <DataAnnotationsValidator />
+                @if (@errorMessage != "")
+                {
+                    <div id="errorMessage" class="alert alert-danger">@errorMessage</div>
+                }
                 <label for="txtUN" class="label">User Name</label>
                 <InputText ID="txtUN" placeholder="User Name" @bind-Value=user.username autocomplete="off" style="margin: 0; width: 100%; padding: 2px 0;" />
                 <br />
@@ -43,6 +47,7 @@
 
 @code {
     private User user = new User();
+    private string errorMessage = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -55,25 +60,27 @@
 
     protected async Task<bool> ValidateUser()
     {
-        DataTable dt = Functions.GetDataTableFromSQL("SELECT [role_id] FROM [users] WHERE [user_name] = '" + user.username + "' AND [password] = '" + user.password + "'");
+        DataTable dt = Functions.GetDataTableFromSQL("SELECT [id], [role_id], [company_id] FROM [users] WHERE [user_name] = '" + user.username + "' AND [password] = '" + user.password + "'");
 
         if (dt.Rows.Count > 0)
         {
-            int roleId = (int)(dt.Rows[0][0]);
-            ((CustomAuthenticationStateProvider)authenticationStateProvider).MarkUserAsAuthenticated(user.username, roleId);
+            int userId = (int)(dt.Rows[0][0]);
+            int roleId = (int)(dt.Rows[0][1]);
+            int companyId = (dt.Rows[0][2] == System.DBNull.Value) ? -1 : (int)dt.Rows[0][2];
+            ((CustomAuthenticationStateProvider)authenticationStateProvider).MarkUserAsAuthenticated(user.username, userId, roleId, companyId);
 
             navigationManager.NavigateTo("/dashboard");
 
             await sessionStorage.SetItemAsync("username", user.username);
-            await sessionStorage.SetItemAsync("role", roleId);
+            await sessionStorage.SetItemAsync("userId", userId);
+            await sessionStorage.SetItemAsync("roleId", roleId);
+            await sessionStorage.SetItemAsync("companyId", companyId);
 
-            //System.Diagnostics.Debug.Print((dt.Rows[0][0]).ToString());
+            //System.Diagnostics.Debug.Print("Hello");
         }
         else
         {
-            //lblResults.Text = "<img src='/Media/Images/error.png' /> User information invalid. " + DateTime.Now.ToLocalTime().ToString("h:mm:ss tt");
-            //lblResults.CssClass = "result-box error-box";
-            //lblResults.Visible = true;
+            errorMessage = "Incorrect user name or password";
         }
         return await Task.FromResult(true);
     }

@@ -27,9 +27,12 @@ namespace Web_Onboard.Data
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
             string username = await _sessionStorageService.GetItemAsync<string>("username");
-            int roleId = await _sessionStorageService.GetItemAsync<int>("role");
+            int? userId = await _sessionStorageService.GetItemAsync<int>("userId");
+            int? roleId = await _sessionStorageService.GetItemAsync<int>("roleId");
+            int? companyId = await _sessionStorageService.GetItemAsync<int>("companyId");
+
             Roles userRole;
-            if (roleId > (int)Roles.BaseUser || roleId < (int)Roles.Owner)
+            if (roleId.HasValue && (roleId > (int)Roles.BaseUser || roleId < (int)Roles.Owner))
             {
                 userRole = Roles.BaseUser;
             }
@@ -37,13 +40,21 @@ namespace Web_Onboard.Data
             {
                 userRole = (Roles)roleId;
             }
+
+            if (!companyId.HasValue)
+            {
+                companyId = -1;
+            }
+
             ClaimsIdentity identity;
-            if (username != null)
+            if (username != null && userId.HasValue)
             {
                 identity = new ClaimsIdentity(new[]
                 {
                 new Claim(ClaimTypes.Name, username),
-                new Claim(ClaimTypes.Role, Enum.GetName(typeof(Roles), userRole))
+                new Claim("UserId", userId.ToString()),
+                new Claim(ClaimTypes.Role, Enum.GetName(typeof(Roles), userRole)),
+                new Claim("CompanyId", companyId.ToString())
                 }, "apiauth_type");
             }
             else
@@ -54,7 +65,7 @@ namespace Web_Onboard.Data
             return await Task.FromResult(new AuthenticationState(user));
         }
 
-        public void MarkUserAsAuthenticated(string username, int roleId = 2)
+        public void MarkUserAsAuthenticated(string username, int userId, int roleId, int companyId)
         {
             Roles userRole;
             if (roleId > (int)Roles.BaseUser || roleId < (int)Roles.Owner)
@@ -65,10 +76,13 @@ namespace Web_Onboard.Data
             {
                 userRole = (Roles)roleId;
             }
+
             ClaimsIdentity identity = new ClaimsIdentity(new[]
             {
                 new Claim(ClaimTypes.Name, username),
-                new Claim(ClaimTypes.Role, Enum.GetName(typeof(Roles), userRole))
+                new Claim("UserId", userId.ToString()),
+                new Claim(ClaimTypes.Role, Enum.GetName(typeof(Roles), userRole)),
+                new Claim("CompanyId", companyId.ToString())
             }, "apiauth_type");
             ClaimsPrincipal user = new ClaimsPrincipal(identity);
             NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(user)));
@@ -77,7 +91,9 @@ namespace Web_Onboard.Data
         public void MarkUserAsLoggedOut()
         {
             _sessionStorageService.RemoveItemAsync("username");
-            _sessionStorageService.RemoveItemAsync("role");
+            _sessionStorageService.RemoveItemAsync("userId");
+            _sessionStorageService.RemoveItemAsync("roleId");
+            _sessionStorageService.RemoveItemAsync("companyId");
 
             ClaimsIdentity identity = new ClaimsIdentity();
             ClaimsPrincipal user = new ClaimsPrincipal(identity);
