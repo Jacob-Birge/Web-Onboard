@@ -5,6 +5,7 @@
     <RootNamespace>Web_Onboard</RootNamespace>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(RunConfiguration)' == 'Web-Onboard' " />
   <ItemGroup>
     <PackageReference Include="Blazored.SessionStorage" Version="1.0.12" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="3.1.9" />
@@ -17,6 +18,7 @@
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="3.1.4" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="4.7.0" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />
+    <PackageReference Include="BlazorInputFile" Version="0.2.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -61,4 +63,7 @@
     <None Include="wwwroot\Images\warning.png" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Upload\" />
+  </ItemGroup>
 </Project>

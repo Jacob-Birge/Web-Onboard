@@ -1,17 +1,367 @@
 ﻿@page "/companymanager"
 @attribute [Authorize(Roles = "Owner")]
+@using Web_Onboard.Data
+@using System.Data
 
-<h3>Company Manager</h3>
+@inject NavigationManager navigationManager
+@inject AuthenticationStateProvider authenticationStateProvider
+@inject Blazored.SessionStorage.ISessionStorageService sessionStorage
 
-<p>Current count: @currentCount</p>
+@using BlazorInputFile
 
-<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+@if (showToast)
+{
+    <div role="alert" aria-live="assertive" aria-atomic="true" class="toast show" data-autohide="false" style="position: absolute; left: 45%; margin-top: 0px">
+        <div class="toast-header">
+            <svg class=" rounded mr-2" width="20" height="20" xmlns="http://www.w3.org/2000/svg"
+                 preserveAspectRatio="xMidYMid slice" focusable="false" role="img">
+                <rect fill="#007aff" width="100%" height="100%" />
+            </svg>
+            <strong class="mr-auto">Alert!</strong>
+            <button @onclick="(e => showToast = false)" type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="toast-body">
+            @toastMessage
+        </div>
+    </div>
+
+}
+
+<div style="display: flex; flex-direction: row; margin-bottom: 20px; width: 100%;">
+    <h3>Company Manager</h3>
+    <button style="float: right; margin-left: auto;" class="btn btn-primary" @onclick="CompanyAddedButtonToggle">Add Company</button>
+</div>
+
+@if (toggleAdd)
+{
+    <div style="display: flex; margin-bottom: 25px">
+        <div style="display: flex; flex-direction: column">
+            <div style="display: flex; flex-direction: column; margin-bottom: 10px">
+                <span>Name</span>
+                <input style="width: 200px" @bind="addedName" type="text" />
+            </div>
+            <InputFile style="color: transparent;" OnChange="ImagePathHandlerAdded" />
+            <div>
+                <button style="margin-top: 20px" class="btn btn-success" @onclick="CompanyAddedComplete">Add Company</button>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(imageURLFromAdded))
+        {
+            <img src="@imageURLFromAdded" style="height:200px;width:200px" />
+        }
+
+    </div>
+    <hr style="width: 100%; margin-left: auto; margin-right: auto; height: 1px; background-color: #666; opacity: 0.5; " />
+}
+
+<div class="main" style="display: flex; flex-direction: column;">
+    @foreach (System.Data.DataRow dr in (dt.Rows))
+    {
+        <div style="display: flex; flex-direction:row">
+            <span style="cursor: pointer; font-size: 150%" class="text-primary" @onclick="(e => CompanyClicked(dr))">@dr[1]</span>
+            @*<img src="Images/edit.png" style="height:15px;width:15px;" />*@
+        </div>
+        @if ((int)selectedCompany == (int)dr[0])
+        {
+
+            <div style="display: flex;">
+                <div>
+                    @if (!string.IsNullOrEmpty(imageURLFromEdited))
+                    {
+                        <img src="@imageURLFromEdited" style="height:150px;width:150px" />
+                    }
+                    else
+                    {
+                        @if (dr[2].ToString().Length > 0)
+                        {
+                            <img src=@ToByte((byte[])dr[2]) style="height:150px;width:150px" />
+                        }
+                        else
+                        {
+                            <img src="Images/cp-ma-logo.png" style="height:150px;width:150px" />
+                        }
+                    }
+                </div>
+                <div style="margin-left: 30px">
+                    <div style="display: flex; flex-direction: column;">
+                        <span>Name</span>
+                        <input style="width: 200px" @bind="editedName" type="text" id="compName" name="compName" />
+                    </div>
+
+                    <div style="margin-top: 15px; display: flex; flex-direction: column;">
+                        <span style="margin-right: 20px">ID</span>
+                        <input value=@dr[0] readonly style="width: 100px; opacity: 0.5" type="text" id="id" name="id" />
+                    </div>
+                    <div style="margin-top: 15px; display: flex; flex-direction: column;">
+                        <span style="margin-right: 20px">Change Image</span>
+                        <InputFile style="color: transparent;" OnChange="ImagePathHandlerEdited" />
+                    </div>
+                </div>
+
+            </div>
+            <div style="margin-top: 20px; margin-bottom: 30px">
+                <button class="btn btn-success" @onclick="(e => CompanyEdited((int)dr[0]))">Edit Company</button>
+                <button style="margin-left: 20px" class="btn btn-danger" @onclick="(e => StartDelete((int)dr[0], dr[1].ToString()))">Delete Company</button>
+            </div>
+            <hr style="width: 100%; margin-left: auto; margin-right: auto; height: 1px; background-color: #666; opacity: 0.5; " />
+        }
+    }
+
+    @if (showModal)
+    {
+        <div class="modal fade show" tabindex="-1" role="dialog" style="display: block;">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Are you sure you want to delete @companyToBeDeletedName</h5>
+                        <button @onclick="UndoDelete" type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-footer">
+                        <button @onclick="UndoDelete" type="button" class="btn btn-secondary">Cancel</button>
+                        <button @onclick="CompanyDeleted" type="button" class="btn btn-danger" data-dismiss="modal">Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+</div>
 
 @code {
-    private int currentCount = 0;
+    object selectedCompany = 0;
+    int prevEdit = 0;
+    string editedName = "";
+    string imageURLFromEdited = "";
 
-    private void IncrementCount()
+    bool imageInputFromAdd = false;
+
+    string addedName = "";
+    string imageURLFromAdded = "";
+    bool toggleAdd = false;
+
+    bool showModal = false;
+    int companyToBeDeleted;
+    string companyToBeDeletedName;
+
+    bool showToast = false;
+    string toastMessage = "";
+
+    DataTable dt = SortDataTable(Functions.GetDataTableFromSQL("SELECT * FROM [companies]"));
+
+    //Sorts the datatable alphabetically
+    public static DataTable SortDataTable(DataTable dt)
     {
-        currentCount++;
+        dt.DefaultView.Sort = "name";
+        dt = dt.DefaultView.ToTable();
+        return dt;
     }
+
+    //When a company from list is clicked
+    public void CompanyClicked(System.Data.DataRow a)
+    {
+        //Determines if the company edit window is already open, if so it will close it
+        if ((int)a[0] == prevEdit)
+        {
+            prevEdit = 0;
+            selectedCompany = 0;
+            return;
+        }
+
+        prevEdit = (int)a[0];
+        selectedCompany = a[0];
+        editedName = a[1].ToString();
+
+        //Determines which image to show
+        if (a[2].ToString().Length > 0)
+        {
+            imageURLFromEdited = ToByte((byte[])a[2]);
+        }
+        else
+        {
+            imageURLFromEdited = "";
+        }
+        StateHasChanged();
+    }
+
+    //When user is finished editing and click "Edit Company" button
+    public void CompanyEdited(int companyID)
+    {
+        //if they have not added a name, do nothing
+        if (editedName.Length < 1)
+        {
+            toastMessage = "Must Add a Company Name!";
+            showToast = true;
+            return;
+        }
+
+        if (imageURLFromEdited.Length > 0)
+        {
+            Functions.GetDataTableFromSQL($"UPDATE companies SET name = '{editedName}', image = CONVERT(VARBINARY(MAX), '{imageURLFromEdited}') WHERE id = '{companyID}'");
+        }
+        else
+        {
+            Functions.GetDataTableFromSQL($"UPDATE companies SET name = '{editedName}' WHERE id = '{companyID}'");
+        }
+
+
+        //resetting data table and values
+        dt = SortDataTable(Functions.GetDataTableFromSQL("SELECT * FROM [companies]"));
+        editedName = "";
+        imageURLFromEdited = "";
+        selectedCompany = 0;
+        prevEdit = 0;
+
+        StateHasChanged();
+    }
+
+    //Toggles the "Add company" button
+    public void CompanyAddedButtonToggle()
+    {
+        toggleAdd = !toggleAdd;
+    }
+
+    //Once user is finished with adding new company data and clicks "Add company" button
+    public void CompanyAddedComplete()
+    {
+        //if they have not added a name, do nothing
+        if (addedName.ToString().Length < 1)
+        {
+            toastMessage = "Must Add a Company Name!";
+            showToast = true;
+            return;
+        }
+
+        //different statements for whether they added an image
+        if (imageURLFromAdded.Length > 0)
+        {
+            Functions.GetDataTableFromSQL($"INSERT INTO companies(id, name, image) VALUES({FindHighestID()}, '{addedName}', CONVERT(VARBINARY(MAX), '{imageURLFromAdded}'))");
+        }
+        else
+        {
+            Functions.GetDataTableFromSQL($"INSERT INTO companies(id, name) VALUES({FindHighestID()}, '{addedName}')");
+        }
+
+        //resetting data table and values
+        dt = SortDataTable(Functions.GetDataTableFromSQL("SELECT * FROM [companies]"));
+        addedName = "";
+        imageURLFromAdded = "";
+        toggleAdd = false;
+
+        StateHasChanged();
+    }
+
+    //When "Delete Company" button is clicked, will show delete modal
+    public void StartDelete(int id, string name)
+    {
+        companyToBeDeleted = id;
+        companyToBeDeletedName = name;
+        showModal = true;
+    }
+
+    //When in modal for delete and then cancel or press x
+    public void UndoDelete()
+    {
+        companyToBeDeleted = 0;
+        companyToBeDeletedName = "";
+        showModal = false;
+    }
+
+    //When Delete is clicked on modal popup
+    public void CompanyDeleted()
+    {
+        Functions.GetDataTableFromSQL($"DELETE FROM dbo.companies WHERE id = '{companyToBeDeleted}';");
+
+        dt = SortDataTable(Functions.GetDataTableFromSQL("SELECT * FROM [companies]"));
+        editedName = "";
+        imageURLFromEdited = "";
+        selectedCompany = 0;
+        showModal = false;
+
+        StateHasChanged();
+    }
+
+    //When option to choose image is clicked from add company view
+    async public void ImagePathHandlerAdded(IFileListEntry[] files)
+    {
+        imageInputFromAdd = true;
+        await HandleImage(files);
+
+    }
+
+    //When option to choose image is clicked from edit company view
+    async public void ImagePathHandlerEdited(IFileListEntry[] files)
+    {
+        imageInputFromAdd = false;
+        await HandleImage(files);
+    }
+
+
+    //When a new image is picked
+    async Task HandleImage(IFileListEntry[] files)
+    {
+        string imageDataURL = "";
+        var file = files.FirstOrDefault();
+        if (file != null)
+        {
+            //check to see if the file is an image or a text file
+            var fileType = GetFileType(file.Name);
+            if (fileType == "image")
+            {
+
+                var ms = new MemoryStream();
+                await file.Data.CopyToAsync(ms);
+                string imageBase64Data = Convert.ToBase64String(ms.ToArray());
+                imageDataURL = string.Format("data:image/png;base64,{0}", imageBase64Data);
+
+                if (imageInputFromAdd) { imageURLFromAdded = imageDataURL; }
+                else { imageURLFromEdited = imageDataURL; }
+
+                StateHasChanged();
+            }
+            else
+            {
+                toastMessage = "Must Add a Valid Image Type!";
+                showToast = true;
+            }
+        }
+
+    }
+
+    //Determines what kind of file has been picked
+    private string GetFileType(string name)
+    {
+        string result = "";
+        if (name.Contains("png") || name.Contains("jpg") || name.Contains("jpeg") || name.Contains("PNG") || name.Contains("JPG") || name.Contains("JPEG"))
+        {
+            result = "image";
+        }
+        else if (name.Contains("txt"))
+        {
+            result = "text";
+        }
+        return result;
+    }
+
+    //Converts varbinary to byte to be read for image display
+    public static String ToByte(Byte[] data)
+    {
+        return System.Text.Encoding.ASCII.GetString((byte[])data);
+    }
+
+    //Finds highest id number and returns one higher
+    public int FindHighestID()
+    {
+        int highest = 0;
+        foreach (System.Data.DataRow dr in (dt.Rows))
+        {
+            if ((int)dr[0] > highest) { highest = (int)dr[0]; }
+        }
+        return highest + 1;
+    }
+
 }
