@@ -10,14 +10,10 @@ namespace Web_Onboard.Data
     {
         [Required]
         public string username { get; set; }
-        [Required]
-        public string password { get; set; }
-        [Required]
-        public string role_id { get; set; }
-        public bool remember { get; set; }
-        public AddUser()
-        {
-            remember = true;
-        }
+        public int role_id { get; set; }
+        public string email { get; set; }
+        public int company_id { get; set; }
+
+
     }
 }
