@@ -6,7 +6,8 @@
 @page "/usermanager"
 @attribute [Authorize(Roles = "Owner, Manager")]
 
-    <h3>User Manager</h3>
+<h3>User Manager</h3>
+<button style="float: right; margin-left: auto;" class="btn btn-primary" @onclick="UserAddedButtonToggle">Add Users</button>
 
 <div style="width: 90%; padding: 5%; background-color: #fff; text-align: left;">
     <EditForm Model="@user">
@@ -24,6 +25,7 @@
                 <th>User Name</th>
                 <th>Email</th>
                 <th>Role ID</th>
+                <th>Company ID</th>
             </tr>
             foreach (DataRow dr in (dt.Rows))
             {
@@ -32,9 +34,11 @@
                 UserName = dr["user_name"].ToString();
                 email = dr["email"].ToString();
                 roleId = (int)dr["role_id"];
-                @*passWord = dr["password"].ToString();*@
-
-
+                if (dr["company_id"] == DBNull.Value)
+                {
+                    companyID = -1;
+                }
+                else { companyID = (int)dr["company_id"]; }
 
                 //Users Table
                 <tr>
@@ -42,49 +46,80 @@
                     <td>@UserName</td>
                     <td>@email</td>
                     <td>@roleId</td>
+                    <td>@companyID</td>
+                    @*<button class="btn btn-success" @onclick="UserDelete">Delete</button>*@
 
                 </tr>
 
-
-
-
             }
             //Add Users form
-            <h1>Add User</h1>
-            <label for="@UserName">User Name:</label>
-            <input type="text" id="@UserName" name="@UserName"><br><br>
-            @*<label> for="@passWord":</label>
-            <input type="text" id="@passWord" name="@passWord"><br><br>*@
-            <input type="submit" value="Submit">
+            @if (addButtonClicked)
+            {
+                <h1>Add User</h1>
+                <label>User Name:</label>
+                <input type="text" @bind="addedUserName">
+                <br>
+                <label>Role ID:</label>
+                <select @bind=" roleIdAdded">
+                    <option value="0">0</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                </select>
+                <br>
+                <label>Email:</label>
+                <input type="text" @bind="emailAdded">
+                <br />
+                <label>Company ID:</label>
+                <input type="text" @bind="companyIdAdded">
+                <br><br>
+                <button class="btn btn-success" @onclick="UserAddedComplete">Add</button>
+            }
 
         }
         else
         //for hiring managers
         {
             <h2>Hi Managers</h2>
-            <h1>Add User</h1>
-            <label for="@UserName">User Name:</label>
-            <input type="text" id="@UserName" name="@UserName"><br><br>
-            @*<label> for="@passWord":</label>
-            <input type="text" id="@passWord" name="@passWord"><br><br>*@
-            <input type="submit" value="Submit">
+            <h2>User Table</h2>
+            <tr>
+                <th>ID</th>
+                <th>User Name</th>
+                <th>Email</th>
+                <th>Role ID</th>
+            </tr>
+            <label>@rowcount</label>
 
+
+            //Users Table
+            <tr>
+                <td>@id</td>
+                <td>@UserName</td>
+                <td>@email</td>
+                <td>@roleId</td>
+            </tr>
         }
+        @*@if (showModal)
+        {
+            <div class="modal fade show" tabindex="-1" role="dialog" style="display: block;">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Are you sure you want to delete @companyToBeDeletedName</h5>
+                            <button @onclick="UndoDelete" type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-footer">
+                            <button @onclick="UndoDelete" type="button" class="btn btn-secondary">Cancel</button>
+                            <button @onclick="CompanyDeleted" type="button" class="btn btn-danger" data-dismiss="modal">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }*@
 
-        <!--<label for="txtUN" class="label">User Name</label>
-    <InputText ID="txtUN" placeholder="User Name" @bind-Value=user.username autocomplete="off" style="margin: 0; width: 100%; padding: 2px 0;" />
-    <br />-->
-        @*<label for="txtUN" class="label">Role ID</label>
-        <InputText ID="txtRI" placeholder="Role ID" @bind-Value=user.role_id autocomplete="off" style="margin: 0; width: 100%; padding: 2px 0;" />
-        <br />
-        <div class="label">Password</div>
-        <InputText ID="txtPass" placeholder="Password" @bind-Value=user.password autocomplete="off" style="margin: 0; width: 100%; padding: 2px 0;" />*@
-        <!--<br />
-    <table style="width: 100%;">
-    </table>
-    <br />
-    <input type="submit" value="Add" class="btn btn-primary" style="margin: 0; width: 100%; padding: 12px 0; font-size: 18px;" />-->
-        @*<label>@curUser</label>*@
+
+
     </EditForm>
 
 </div>
@@ -101,11 +136,24 @@
     private int roleId = 0;
     private string email = "";
     private DataTable dt;
+    private DataTable dt1;
     private string curUser = "";
     private int curCompany = 0;
     private bool isAndy = false;
-    private string passWord = "";
- 
+    //default passord 
+    private string passWord = "cpma";
+    private bool addButtonClicked = false;
+    private string addedUserName = "";
+    //validate if the role id is not 0,1,2
+    private int roleIdAdded = 999;
+    private string emailAdded = "";
+    private int companyIdAdded ;
+    private int active = 1;
+    private int rowcount = 0;
+    private int userTobeDeleted = 0;
+    private string userTobeDeletedName = "";
+    private bool showModal = false;
+
 
     @*System.Diagnostics.Debug.Print(curUser);*@
 
@@ -116,11 +164,14 @@ protected override async Task OnInitializedAsync()
     curUser = await sessionStorage.GetItemAsync<string>("username");
     curCompany = await sessionStorage.GetItemAsync<int>("companyId");
     dt = Functions.GetDataTableFromSQL("SELECT [id],[user_name], [role_id], [company_id],[email] FROM [users]");
+    dt1 = Functions.GetDataTableFromSQL($"SELECT [id],[user_name], [role_id],[email] FROM [users] WHERE [company_id] = {curCompany} ");
+
+
     IsAndy();
 
 }
 
-
+//Check if it is Andy logged in 
 public void IsAndy()
 {
     if (curUser == "andy")
@@ -128,13 +179,41 @@ public void IsAndy()
         isAndy = true;
     }
 }
-@*public void getCompanies()
+//check if the add user button is clicked
+public void UserAddedButtonToggle()
+{
+    addButtonClicked = !addButtonClicked;
+}
+//Action for user insert button
+public void UserAddedComplete()
 {
 
-    foreach (System.Data.DataRow dr in (dt.Rows))
+    if (addedUserName.ToString() == "" || roleIdAdded == 999)
     {
-        Companies.Add((int)dr[2]);
+        errorMessage = "Must fill in all the columns";
+        return;
     }
-}*@
+    else
+    {
+
+        Functions.GetDataTableFromSQL($"INSERT INTO users(user_name,role_id,password,email,company_id,active) VALUES('{addedUserName}',{roleIdAdded},'{passWord}','{emailAdded}',{companyIdAdded},{active})");
+
+
+        addButtonClicked = false;
+        //reset
+        addedUserName = "";
+        roleIdAdded = 999;
+        emailAdded = "";
+        //reload page
+        StateHasChanged();
+    }
 
 }
+@*public void UserDelete()
+{
+    Functions.GetDataTableFromSQL($"DELETE FROM users WHERE id = '{userToBeDeleted}';");
+}*@
+
+
+}
+
