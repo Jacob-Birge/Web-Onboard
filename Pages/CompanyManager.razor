@@ -60,32 +60,37 @@
 <div class="main" style="display: flex; flex-direction: column;">
     @foreach (System.Data.DataRow dr in (dt.Rows))
     {
-        <div style="display: flex; flex-direction:row">
-            <span style="cursor: pointer; font-size: 150%" class="text-primary" @onclick="(e => CompanyClicked(dr))">@dr[1]</span>
-            @*<img src="Images/edit.png" style="height:15px;width:15px;" />*@
+        <div style="display: flex; flex-direction:row; margin: 10px 0 10px 0; text-align: center">
+            <div>
+                @if (!string.IsNullOrEmpty(imageURLFromEdited) && (int)dr[0] == (int)selectedCompany)
+                {
+                    <img src="@imageURLFromEdited" style="height:80px;width:80px; border-radius: 20%; border: 1px solid white;" />
+                }
+                else
+                {
+                    @if (dr[2].ToString().Length > 0)
+                    {
+                        <img src=@ToByte((byte[])dr[2]) style="height:80px;width:80px; border-radius: 20%; border: 1px solid white;" />
+                    }
+                    else
+                    {
+                        <img src="Images/cp-ma-logo.png" style="height:80px;width:80px; border-radius: 20%; border: 1px solid white;" />
+                    }
+                }
+            </div>
+            <span style="font-size: 200%; margin-left: 25px; margin-top: 15px; color: #667">@dr[1]</span>
+            <button style="height: 50px; width: 50px; border-radius: 50%; background-color: #667; margin: auto 10px auto auto;" @onclick="(e => CompanyClicked(dr))">
+                <img src="Images/edit.png" style="height:25px; position: relative; width:25px" />
+            </button>
         </div>
+
+
         @if ((int)selectedCompany == (int)dr[0])
         {
 
             <div style="display: flex;">
+
                 <div>
-                    @if (!string.IsNullOrEmpty(imageURLFromEdited))
-                    {
-                        <img src="@imageURLFromEdited" style="height:150px;width:150px" />
-                    }
-                    else
-                    {
-                        @if (dr[2].ToString().Length > 0)
-                        {
-                            <img src=@ToByte((byte[])dr[2]) style="height:150px;width:150px" />
-                        }
-                        else
-                        {
-                            <img src="Images/cp-ma-logo.png" style="height:150px;width:150px" />
-                        }
-                    }
-                </div>
-                <div style="margin-left: 30px">
                     <div style="display: flex; flex-direction: column;">
                         <span>Name</span>
                         <input style="width: 200px" @bind="editedName" type="text" id="compName" name="compName" />
@@ -106,10 +111,11 @@
                 <button class="btn btn-success" @onclick="(e => CompanyEdited((int)dr[0]))">Edit Company</button>
                 <button style="margin-left: 20px" class="btn btn-danger" @onclick="(e => StartDelete((int)dr[0], dr[1].ToString()))">Delete Company</button>
             </div>
-            <hr style="width: 100%; margin-left: auto; margin-right: auto; height: 1px; background-color: #666; opacity: 0.5; " />
+            @*<hr style="width: 100%; margin-left: auto; margin-right: auto; height: 1px; background-color: #666; opacity: 0.5; " />*@
         }
-    }
+        <hr style="width: 100%; margin-left: auto; margin-right: auto; height: 1px; background-color: #667; opacity: 0.5; " />
 
+    }
     @if (showModal)
     {
         <div class="modal fade show" tabindex="-1" role="dialog" style="display: block;">
@@ -152,6 +158,11 @@
     string toastMessage = "";
 
     DataTable dt = SortDataTable(Functions.GetDataTableFromSQL("SELECT * FROM [companies]"));
+
+    public void tester(object a)
+    {
+        Console.WriteLine(a);
+    }
 
     //Sorts the datatable alphabetically
     public static DataTable SortDataTable(DataTable dt)
