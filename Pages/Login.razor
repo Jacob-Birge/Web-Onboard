@@ -60,22 +60,30 @@
 
     protected async Task<bool> ValidateUser()
     {
-        DataTable dt = Functions.GetDataTableFromSQL("SELECT [id], [role_id], [company_id] FROM [users] WHERE [user_name] = '" + user.username + "' AND [password] = '" + user.password + "'");
+        DataTable dt = Functions.GetDataTableFromSQL("SELECT [id], [role_id], [company_id], [user_name], [password] FROM [users] WHERE [user_name] = '" + user.username + "' AND [password] = '" + user.password + "'");
 
         if (dt.Rows.Count > 0)
         {
-            int userId = (int)(dt.Rows[0][0]);
-            int roleId = (int)(dt.Rows[0][1]);
-            int companyId = (dt.Rows[0][2] == System.DBNull.Value) ? -1 : (int)dt.Rows[0][2];
-            ((CustomAuthenticationStateProvider)authenticationStateProvider).MarkUserAsAuthenticated(user.username, userId, roleId, companyId);
+            string username = (string)(dt.Rows[0][3]);
+            string pass = (string)(dt.Rows[0][4]);
+            if (username.Equals(user.username) && pass.Equals(user.password))
+            {
+                int userId = (int)(dt.Rows[0][0]);
+                int roleId = (int)(dt.Rows[0][1]);
+                int companyId = (dt.Rows[0][2] == System.DBNull.Value) ? -1 : (int)dt.Rows[0][2];
+                ((CustomAuthenticationStateProvider)authenticationStateProvider).MarkUserAsAuthenticated(user.username, userId, roleId, companyId);
 
-            navigationManager.NavigateTo("/dashboard");
+                navigationManager.NavigateTo("/dashboard");
 
-            await sessionStorage.SetItemAsync("username", user.username);
-            await sessionStorage.SetItemAsync("userId", userId);
-            await sessionStorage.SetItemAsync("roleId", roleId);
-            await sessionStorage.SetItemAsync("companyId", companyId);
-
+                await sessionStorage.SetItemAsync("username", user.username);
+                await sessionStorage.SetItemAsync("userId", userId);
+                await sessionStorage.SetItemAsync("roleId", roleId);
+                await sessionStorage.SetItemAsync("companyId", companyId);
+            }
+            else
+            {
+                errorMessage = "Incorrect user name or password";
+            }
             //System.Diagnostics.Debug.Print("Hello");
         }
         else
