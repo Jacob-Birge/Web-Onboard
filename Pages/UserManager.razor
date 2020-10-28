@@ -14,7 +14,13 @@
         <DataAnnotationsValidator />
         @if (@errorMessage != "")
         {
+            StateHasChanged();
             <div id="errorMessage" class="alert alert-danger">@errorMessage</div>
+        }
+        
+        @if (successMsg != "")
+        {
+            <div id="errorMessage" class="alert alert-success">@successMsg</div>
         }
         @if (isAndy)
         {
@@ -79,24 +85,25 @@
         else
         //for hiring managers
         {
-            <h2>Hi Managers</h2>
-            <h2>User Table</h2>
-            <tr>
-                <th>ID</th>
-                <th>User Name</th>
-                <th>Email</th>
-                <th>Role ID</th>
-            </tr>
-            <label>@rowcount</label>
+            @if (addButtonClicked)
+            {
+                <h1>Add User</h1>
+                <label>User Name:</label>
+                <input type="text" @bind="addedUserName">
+                <br>
+                <label>Role ID:</label>
+                <select @bind=" roleIdAdded">
+                    <option value="0">0</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                </select>
+                <br>
+                <label>Email:</label>
+                <input type="text" @bind="emailAdded">
 
-
-            //Users Table
-            <tr>
-                <td>@id</td>
-                <td>@UserName</td>
-                <td>@email</td>
-                <td>@roleId</td>
-            </tr>
+                <br><br>
+                <button class="btn btn-success" @onclick="UserAddedComplete">Add</button>
+            }
         }
         @*@if (showModal)
         {
@@ -136,7 +143,7 @@
     private int roleId = 0;
     private string email = "";
     private DataTable dt;
-    private DataTable dt1;
+
     private string curUser = "";
     private int curCompany = 0;
     private bool isAndy = false;
@@ -147,12 +154,13 @@
     //validate if the role id is not 0,1,2
     private int roleIdAdded = 999;
     private string emailAdded = "";
-    private int companyIdAdded ;
+    private int companyIdAdded;
     private int active = 1;
     private int rowcount = 0;
     private int userTobeDeleted = 0;
     private string userTobeDeletedName = "";
     private bool showModal = false;
+    private string successMsg = "";
 
 
     @*System.Diagnostics.Debug.Print(curUser);*@
@@ -164,7 +172,7 @@ protected override async Task OnInitializedAsync()
     curUser = await sessionStorage.GetItemAsync<string>("username");
     curCompany = await sessionStorage.GetItemAsync<int>("companyId");
     dt = Functions.GetDataTableFromSQL("SELECT [id],[user_name], [role_id], [company_id],[email] FROM [users]");
-    dt1 = Functions.GetDataTableFromSQL($"SELECT [id],[user_name], [role_id],[email] FROM [users] WHERE [company_id] = {curCompany} ");
+
 
 
     IsAndy();
@@ -195,16 +203,22 @@ public void UserAddedComplete()
     }
     else
     {
+        if (curUser != "andy")
+        {
+            companyIdAdded = curCompany;
+        }
+
 
         Functions.GetDataTableFromSQL($"INSERT INTO users(user_name,role_id,password,email,company_id,active) VALUES('{addedUserName}',{roleIdAdded},'{passWord}','{emailAdded}',{companyIdAdded},{active})");
-
-
         addButtonClicked = false;
         //reset
         addedUserName = "";
         roleIdAdded = 999;
         emailAdded = "";
+        companyIdAdded = 0;
         //reload page
+        successMsg = "Successfull!";
+
         StateHasChanged();
     }
 
