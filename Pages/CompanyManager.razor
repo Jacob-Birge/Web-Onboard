@@ -239,11 +239,11 @@
         //different statements for whether they added an image
         if (imageURLFromAdded.Length > 0)
         {
-            Functions.GetDataTableFromSQL($"INSERT INTO companies(id, name, image) VALUES({FindHighestID()}, '{addedName}', CONVERT(VARBINARY(MAX), '{imageURLFromAdded}'))");
+            Functions.GetDataTableFromSQL($"INSERT INTO companies(name, image) VALUES('{addedName}', CONVERT(VARBINARY(MAX), '{imageURLFromAdded}'))");
         }
         else
         {
-            Functions.GetDataTableFromSQL($"INSERT INTO companies(id, name) VALUES({FindHighestID()}, '{addedName}')");
+            Functions.GetDataTableFromSQL($"INSERT INTO companies(name) VALUES('{addedName}')");
         }
 
         //resetting data table and values
@@ -351,17 +351,6 @@
     public static String ToByte(Byte[] data)
     {
         return System.Text.Encoding.ASCII.GetString((byte[])data);
-    }
-
-    //Finds highest id number and returns one higher
-    public int FindHighestID()
-    {
-        int highest = 0;
-        foreach (System.Data.DataRow dr in (dt.Rows))
-        {
-            if ((int)dr[0] > highest) { highest = (int)dr[0]; }
-        }
-        return highest + 1;
     }
 
 }
