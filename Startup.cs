@@ -14,6 +14,7 @@ using Web_Onboard.Data;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Blazored.SessionStorage;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Web_Onboard
 {
@@ -33,7 +34,6 @@ namespace Web_Onboard
             services.AddRazorPages();
             services.AddServerSideBlazor();
             services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
-            services.AddSingleton<WeatherForecastService>();
             services.AddBlazoredSessionStorage();
         }
 

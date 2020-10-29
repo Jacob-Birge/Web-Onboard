@@ -25,6 +25,12 @@
 
     <link href="https://cdn.quilljs.com/1.1.3/quill.snow.css" rel="stylesheet" />
     <link href="https://cdn.quilljs.com/1.1.3/quill.bubble.css" rel="stylesheet" />
+
+    <style>
+        .error {
+            border: 2px solid red;
+        }
+    </style>
 </head>
 <body>
     <app>
@@ -36,10 +42,38 @@
             <div class="top-row px-4">
             </div>
             <div class="content px-4">
-                <h3>
-                    Custom Page Builder
-                    <button class="btn btn-primary" onclick="genPDF();" style="float: right;"> Save </button>
-                </h3>
+                @if (Model.roleId == 0)
+                {
+                    <div style="align-content:center;text-align:center">
+                        <h4 style="display:inline"> Current Company: </h4>
+                        @Html.DropDownList("companySelection", Model.companyListItems, new { @onchange = "changeCompany(this.value)", @style = "display:inline-block; margin:auto;" })
+                    </div>
+                    <br />
+                }
+
+                <div id="errorMessage" class="alert alert-danger" style="display:none">
+                    Failed to upload file.<br />
+                    Please contact system administrator.
+                </div>
+                <div id="filenameMessage" class="alert alert-warning" style="display:none">
+                    Must enter a file name.
+                </div>
+                <div id="uploadingMessage" class="alert alert-info" style="display:none">
+                    Uploading...
+                </div>
+                <div id="successMessage" class="alert alert-success" style="display:none">
+                    Successfully uploaded file.
+                </div>
+
+                <div style="padding:0px 0px 0px 0px;">
+                    <h3 style="display:inline"> Custom Page Builder </h3>
+                    <div style="display:inline; width:100%;">
+                        <button class="btn btn-primary" style="float: right;" onclick="genPDF();"> Save </button>
+                        <input type="text" class="form-control" id="filename" placeholder="File Name" style="text-align:center; float:right; width: 25%; padding:0px 5px 0px 0px;">
+                    </div>
+                </div>
+                <br />
+                <div id="display"></div>
                 <div id="toolbar"></div>
                 <div id="editor" style="height: 11.685in; width: 8.3in;margin: auto;"></div>
 
@@ -89,18 +123,88 @@
             },
             theme: 'snow'
         });
+        var companyIdStr = @Html.DisplayFor(model => model.companyId);
+        var messageIds = ["errorMessage", "filenameMessage", "uploadingMessage", "successMessage"]
 
-        //Works, but not perfect. Most things display but numbered lists do not.
-        function genPDF() {
-            
-            const page = document.getElementById("editor");
-            var opt = {
-                filename: 'myfile.pdf',
-                image: { type: 'png', quality: 1 },
-                html2canvas: { scale: 2 },
-                //jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        function changeCompany(val) {
+            var pathname = window.location.pathname;
+            var handler = "?handler=CompanyChange";
+            var actionpath = pathname + handler;
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+
+                }
             };
-            html2pdf().from(page).set(opt).save();
+            xhttp.open("GET", actionpath + "&compId=" + val, true);
+            xhttp.send();
+        }
+
+        function showMessage(elementId) {
+            messageIds.forEach(function (item, index) {
+                showMessageHelper(item, elementId);
+            });
+        }
+
+        function showMessageHelper(item, elementId) {
+            if (elementId == item) {
+                document.getElementById(item).style.display = "block";
+            }
+            else {
+                document.getElementById(item).style.display = "none";
+            }
+        }
+
+        function requestHelper(html, filename) {
+            var sendLimit = 1500;
+            var xhttp = new XMLHttpRequest();
+            var done = false;
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    if (!done) {
+                        requestHelper(html.substring(sendLimit), filename);
+                    }
+                    else {
+                        showMessage("successMessage");
+                        quill.setContents([{ insert: '\n' }]);
+                    }
+                }
+            };
+            var portionToSend;
+            if (html.length > sendLimit) {
+                portionToSend = html.substring(0, sendLimit);
+                portionToSend = encodeURIComponent(portionToSend);
+                xhttp.open("GET", "api/buildhtml?html=" + portionToSend, true);
+                xhttp.send();
+            }
+            else {
+                done = true;
+                portionToSend = html;
+                portionToSend = encodeURIComponent(portionToSend);
+                xhttp.open("GET", "api/savecustom?html=" + portionToSend + "&filename=" + filename.toString() + "&companyid=" + companyIdStr, true);
+                xhttp.send();
+            }
+        }
+
+        function genPDF() {
+            var filename = document.getElementById("filename").value;
+            filename = filename.replace(".pdf", "");
+            if (filename == "") {
+                document.getElementById("filename").className = document.getElementById("filename").className + " error";
+                showMessage("filenameMessage");
+            }
+            else {
+                document.getElementById("filename").className = document.getElementById("filename").className.replace(" error", "");
+                showMessage("uploadingMessage");
+                try {
+                    const page = document.getElementById("editor");
+                    var html = page.getElementsByClassName("ql-editor")[0].innerHTML;
+                    requestHelper(html, filename);
+                }
+                catch{
+                    uploadingMessage("errorMessage")
+                }
+            }
         }
     </script>
 </body>

@@ -6,6 +6,13 @@
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'Web-Onboard' " />
+
+  <ItemGroup>
+    <Compile Remove="Upload\**" />
+    <Content Remove="Upload\**" />
+    <EmbeddedResource Remove="Upload\**" />
+    <None Remove="Upload\**" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Blazored.SessionStorage" Version="1.0.12" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="3.1.9" />
@@ -16,6 +23,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="3.1.4" />
+    <PackageReference Include="Select.HtmlToPdf.NetCore" Version="20.2.0" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="4.7.0" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />
     <PackageReference Include="BlazorInputFile" Version="0.2.0" />
@@ -61,9 +69,5 @@
     <None Include="wwwroot\Images\settings.png" />
     <None Include="wwwroot\Images\settings_light.png" />
     <None Include="wwwroot\Images\warning.png" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Upload\" />
   </ItemGroup>
 </Project>

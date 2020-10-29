@@ -4,7 +4,6 @@
 @using System.Data
 @inject NavigationManager navigationManager
 @inject AuthenticationStateProvider authenticationStateProvider
-@inject Blazored.SessionStorage.ISessionStorageService sessionStorage
 
 <h3>Login</h3>
 
@@ -74,11 +73,6 @@
                 ((CustomAuthenticationStateProvider)authenticationStateProvider).MarkUserAsAuthenticated(user.username, userId, roleId, companyId);
 
                 navigationManager.NavigateTo("/dashboard");
-
-                await sessionStorage.SetItemAsync("username", user.username);
-                await sessionStorage.SetItemAsync("userId", userId);
-                await sessionStorage.SetItemAsync("roleId", roleId);
-                await sessionStorage.SetItemAsync("companyId", companyId);
             }
             else
             {
