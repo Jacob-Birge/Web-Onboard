@@ -7,11 +7,11 @@
 @inject AuthenticationStateProvider authenticationStateProvider
 @inject Blazored.SessionStorage.ISessionStorageService sessionStorage
 
-<h3 style="display:inline-flex">Booklet Builder</h3>
+<h3>Booklet Builder</h3>
 
 @if (curRole == 0)
 {
-    <div style="justify-content:center;align-items:center;display:inline-flex;text-align:center">
+    <div style="justify-content:center;align-items:center;text-align:center">
         <h4 style="display:inline-block;align-content:center; margin-left:auto;"> Current Company: </h4>
         <select @onchange="CompanyChanged" style="display: inline-block; margin-right:auto;">
             <option value="-1"></option>
@@ -60,19 +60,21 @@
     </table>
     @if (BookletPages.Count > 0)
     {
-        <button @onclick="SaveBooklet">Save Booklet</button>
-        <ul ondragover="event.preventDefault();" style="margin: auto">
-            @foreach (Page item in BookletPages)
-            {
-                @if (item != null && (curCompany == -1 || curCompany == item.Company_ID))
+        <div style="justify-content: center; align-items: center; text-align: center; width:auto; margin:auto;">
+            <button @onclick="SaveBooklet">Save Booklet</button>
+            <ul ondragover="event.preventDefault();" class="list-group list-group-horizontal" style="margin: auto">
+                @foreach (Page item in BookletPages)
                 {
-                    <li draggable="true" style="list-style-type:none; height:30px" @key="item.ID" tabindex="1"
-                        @ondrop="@(()=> Drop(item))" @ondrag="@(()=> StartDrag(item))">
-                        <span>@item.Name</span> <span>@item.Company_ID</span>
-                    </li>
+                    @if (item != null && (curCompany == -1 || curCompany == item.Company_ID))
+                    {
+                        <li oncontextmenu="return false;" draggable="true" class="list-group-item" style="list-style-type:none;" @key="item.ID" tabindex="1"
+                            @ondrop="@(()=> Drop(item))" @ondrag="@(()=> StartDrag(item))" @onmouseup="@((e)=> RemovePage(e, item))">
+                            <span>@item.Name</span> <span>@item.Company_ID</span>
+                        </li>
+                    }
                 }
-            }
-        </ul>
+            </ul>
+        </div>
     }
 }
 
@@ -179,8 +181,18 @@
             }
             BookletPages.Add(AllPages[index].Copy());
             BookletPages[BookletPages.Count - 1].ID = newID;
+            StateHasChanged();
         }
-        StateHasChanged();
+    }
+
+    void RemovePage(MouseEventArgs e, Page item)
+    {
+        if (e.Button == 2 && item != null)
+        {
+            int index = GetIndex(item);
+            BookletPages.RemoveAt(index);
+            StateHasChanged();
+        }
     }
 
     void SaveBooklet()
