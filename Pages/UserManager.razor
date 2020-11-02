@@ -44,13 +44,15 @@
 
     @if (curRole == 0 || curRole == 1)
     {
-        <h2>User Table</h2>
-        <table>
+        <table style="margin: auto">
             <tr>
                 <th>User Name</th>
                 <th>Email</th>
                 <th>Role ID</th>
-                <th>Company ID</th>
+                @if (curRole == 0)
+                {
+                    <th>Company ID</th>
+                }
             </tr>
             @foreach (DataRow dr in (dt.Rows))
             {
@@ -62,7 +64,10 @@
                         <td>@(dr["user_name"].ToString())</td>
                         <td>@(dr["email"].ToString())</td>
                         <td>@((int)dr["role_id"])</td>
-                        <td>@companyID</td>
+                        @if (curRole == 0)
+                        {
+                            <td>@companyID</td>
+                        }
                         @*<button class="btn btn-success" @onclick="UserDelete">Delete</button>*@
                     </tr>
                 }
