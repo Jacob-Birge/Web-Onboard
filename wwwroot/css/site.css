@@ -222,3 +222,17 @@ app {
         display: block;
     }
 }
+
+.ql-undo {
+    width: 60px !important;
+}
+.ql-undo:after {
+    content: "Undo";
+}
+
+.ql-redo {
+    width: 60px !important;
+}
+.ql-redo:after {
+    content: "Redo";
+}

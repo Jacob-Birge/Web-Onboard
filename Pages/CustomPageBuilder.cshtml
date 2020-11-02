@@ -73,10 +73,11 @@
                     </div>
                 </div>
                 <br />
-                <div id="display"></div>
-                <div id="toolbar"></div>
-                <div id="editor" style="height: 11.685in; width: 8.3in;margin: auto;"></div>
-
+                <div style="width: 8.3in;margin: auto;">
+                    <div id="display"></div>
+                    <div id="toolbar"></div>
+                    <div id="editor" style="height: 11.685in; width: 8.3in;margin: auto;"></div>
+                </div>
             </div>
         </div>
     </app>
@@ -96,33 +97,47 @@
     <script>
         var toolbarOptions = [
             ['bold', 'italic', 'underline', 'strike'],        // toggled buttons
-            ['blockquote', 'code-block'],
+            ['blockquote'],
 
-            [{ 'header': 1 }, { 'header': 2 }],               // custom button values
             [{ 'list': 'ordered' }, { 'list': 'bullet' }],
             [{ 'script': 'sub' }, { 'script': 'super' }],      // superscript/subscript
             [{ 'indent': '-1' }, { 'indent': '+1' }],          // outdent/indent
             [{ 'direction': 'rtl' }],                         // text direction
 
-            ['link', 'image', 'video', 'formula'],
+            ['link', 'image', 'formula'],
 
             [{ 'size': ['small', false, 'large', 'huge'] }],  // custom dropdown
             [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+
+            //undo and redo:
+            ['undo', 'redo'],
 
             [{ 'color': [] }, { 'background': [] }],          // dropdown with defaults from theme
             [{ 'font': [] }],
             [{ 'align': [] }],
 
-            ['image'],
-
             ['clean']                                         // remove formatting button
         ];
         var quill = new Quill('#editor', {
             modules: {
-                toolbar: toolbarOptions
+                toolbar: toolbarOptions,
+                history: {
+                    delay: 2000,
+                    maxStack: 500,
+                    userOnly: true
+                }
             },
             theme: 'snow'
         });
+        var undoButton = document.querySelector('.ql-undo');
+        undoButton.addEventListener('click', function () {
+            quill.history.undo();
+        });
+        var redoButton = document.querySelector('.ql-redo');
+        redoButton.addEventListener('click', function () {
+            quill.history.redo();
+        });
+
         var companyIdStr = @Html.DisplayFor(model => model.companyId);
         var messageIds = ["errorMessage", "filenameMessage", "uploadingMessage", "successMessage"]
 
