@@ -97,24 +97,27 @@
     @foreach (DataRow dr in (dt.Rows))
     {
         int companyID = (dr["company_id"] == DBNull.Value) ? -1 : (int)dr["company_id"];
-    <div style="display: flex; flex-direction:row; margin: 10px 0 10px 0; text-align: center">
+        <div style="display: flex; flex-direction:row; margin: 10px 0 10px 0; text-align: center">
 
-        @if (curCompany == -1 || curCompany == companyID)
-        {
-            <span style="font-size: 200%; margin-left: 25px; margin-top: 15px; color: #667">@(dr["user_name"].ToString())</span>
-            companies_dt_joined = Functions.GetDataTableFromSQL("SELECT [name] FROM [companies] WHERE [id] =" + companyID);
-            @foreach (DataRow dr1 in (companies_dt_joined.Rows))
+            @if (curCompany == -1 || curCompany == companyID)
             {
-                <span style="font-size: 200%; margin-left: 25px; margin-top: 15px; color: #667">@dr1["name"]</span>
+                <span style="font-size: 200%; margin-left: 25px; margin-top: 15px; color: #667">@(dr["user_name"].ToString())</span>
+                companies_dt_joined = Functions.GetDataTableFromSQL("SELECT [name] FROM [companies] WHERE [id] =" + companyID);
+                @*@foreach (DataRow dr1 in (companies_dt_joined.Rows))
+                {
+                    <span style="font-size: 200%; margin-left: 25px; margin-top: 15px; color: #667">@dr1["name"]</span>
+                }*@
+                <button style="height: 50px; width: 50px; border-radius: 50%; background-color: #667; margin: auto 10px auto auto;" @onclick="(e => UserClicked(dr))">
+                    <img src="Images/edit.png" style="height:25px; position: relative; width:25px" />
+                </button>
+              
+
+
             }
-            <button style="height: 50px; width: 50px; border-radius: 50%; background-color: #667; margin: auto 10px auto auto;" @onclick="(e => UserClicked(dr))">
-                <img src="Images/edit.png" style="height:25px; position: relative; width:25px" />
-            </button>
-
-        }
 
 
-    </div>
+        </div>
+       
         @if ((int)userSelected == (int)dr[0])
         {
             <div style="display: flex;">
@@ -122,19 +125,30 @@
                 <div>
                     <div style="display: flex; flex-direction: column;">
                         <span>User Name</span>
-                        <input style="width: 200px" @bind="user.username" type="text" id="compName" name="compName" />
+                        <input style="width: 200px" @bind="editedName" type="text" />
                     </div>
 
                     <div style="margin-top: 15px; display: flex; flex-direction: column;">
-                        <span style="margin-right: 20px">ID</span>
-                        <input value=@dr[0] readonly style="width: 100px; opacity: 0.5" type="text" id="id" name="id" />
+                        <span style="margin-right: 20px">Role ID</span>
+                        <select @bind ="editedRoleID">
+                            @if (curRole == 0)
+                            {
+                                <option value="0" >CPMA Admin</option>
+                            }
+                            <option value="1" >Hiring Manager</option>
+                            <option value="2" >New Hire</option>
+                        </select>
                     </div>
-                 
+                    <div style="display: flex; flex-direction: column;">
+                        <span>Email</span>
+                        <input style="width: 200px"   type="text"@bind="editedEmail" />
+                    </div>
+
                 </div>
             </div>
             <div style="margin-top: 20px; margin-bottom: 30px">
-                <button class="btn btn-success" >Edit User</button>
-                <button style="margin-left: 20px" class="btn btn-danger">Delete User</button>
+                <button class="btn btn-success" @onclick="(e => UserEdited((int)dr[0]))">Update</button>
+                <button style="margin-left: 20px" class="btn btn-danger">Delete</button>
             </div>
         }
 
@@ -189,6 +203,11 @@
         private int userSelected = 0;
         private int prevClicked = 0;
         private int companyIDclicked = 0;
+        private string editedName = "";
+        private string editedEmail = "";
+        private int editedRoleID = 999;
+        private bool userSelect_view = false;
+        private string roleName = "";
 
         protected override async Task OnInitializedAsync()
         {
@@ -249,12 +268,16 @@
             }
             prevClicked = (int)a[0];
             userSelected = (int)a[0];
+            editedName = a["user_name"].ToString();
+            editedEmail = a["email"].ToString();
+            editedRoleID = (int)a["role_id"];
             companyIDclicked = (a["company_id"] == DBNull.Value) ? -1 : (int)a["company_id"];
-            companies_dt_joined = Functions.GetDataTableFromSQL("SELECT [name] FROM [companies] WHERE [id] =" + companyIDclicked);
+    
             StateHasChanged();
 
 
         }
+ 
 
         public async void CompanyChanged(ChangeEventArgs e)
         {
@@ -262,8 +285,41 @@
             ((CustomAuthenticationStateProvider)authenticationStateProvider).setCompanyId(curCompany);
             StateHasChanged();
         }
-        /*public void UserDelete()
+        //When user is finished editing and click "Edit User" button
+        public void UserEdited(int UserID)
         {
-            Functions.GetDataTableFromSQL($"DELETE FROM users WHERE id = '{userToBeDeleted}';");
-        }*/
+            //if they have not added a name, do nothing
+            if (editedName.Length < 1)
+            {
+                errorMessage = "Must Add a User Name!";
+
+                return;
+            }
+
+            if (editedRoleID == 999)
+            {
+                errorMessage = "Must Add a Role!";
+                @*Functions.GetDataTableFromSQL($"UPDATE companies SET name = '{editedName}', image = CONVERT(VARBINARY(MAX), '{imageURLFromEdited}') WHERE id = '{companyID}'");*@
+            }
+            if(editedEmail.Length > 1)
+            {
+                Functions.GetDataTableFromSQL($"UPDATE users SET user_name = '{editedName}',role_id = '{editedRoleID}',email = '{editedEmail}' WHERE id = '{UserID}'");
+            }
+            else
+            {
+                Functions.GetDataTableFromSQL($"UPDATE users SET user_name = '{editedName}',role_id = '{editedRoleID}' WHERE id = '{UserID}'");
+            }
+
+
+            //resetting data table and values
+
+            editedName = "";
+            editedRoleID = 999;
+            editedEmail = "";
+
+            userSelected = 0;
+            prevClicked = 0;
+
+            StateHasChanged();
+        }
     }
