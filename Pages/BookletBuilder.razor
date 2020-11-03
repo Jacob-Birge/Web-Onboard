@@ -1,8 +1,8 @@
 ﻿@page "/bookletbuilder"
 @using Web_Onboard.Data
 @using System.Data
-@using PdfSharp.Pdf;
-@using PdfSharp.Pdf.IO;
+@using PdfSharpCore.Pdf;
+@using PdfSharpCore.Pdf.IO;
 @attribute [Authorize(Roles = "Owner")]
 @inject AuthenticationStateProvider authenticationStateProvider
 @inject Blazored.SessionStorage.ISessionStorageService sessionStorage
@@ -34,10 +34,10 @@
 {
     <table style="margin: auto">
         <tr>
-            <th>User Name</th>
+            <th>File Name</th>
             @if (curRole == 0)
             {
-                <th>Company ID</th>
+                <th>Company</th>
             }
             <th></th>
         </tr>
@@ -50,7 +50,7 @@
                     <td>@item.Name</td>
                     @if (curRole == 0)
                     {
-                        <td>@item.Company_ID</td>
+                        <td>@item.Company_Name</td>
                     }
                     <td><button class="btn btn-success" @onclick="@(e => AddPage(item.ID))">Add</button></td>
                     @*<button class="btn btn-success" @onclick="UserDelete">Delete</button>*@
@@ -103,7 +103,7 @@
         if (curRole == 0)
         {
             companies_dt = Functions.GetDataTableFromSQL("SELECT [id], [name] FROM [companies]");
-            dt = Functions.GetDataTableFromSQL("SELECT [id], [company_id], [custom_page], [name], [file] FROM [pages]");
+            dt = Functions.GetDataTableFromSQL("SELECT p.[id], p.[company_id], p.[custom_page], p.[name], p.[file], c.[name] FROM [pages] p left join [companies] c on p.company_id=c.id");
         }
         else
         {
@@ -119,7 +119,10 @@
                 Stream s = new MemoryStream(byteArr);
                 PdfDocument doc = PdfReader.Open(s, PdfDocumentOpenMode.Import);
                 int compID = (dr[1] == DBNull.Value) ? -1 : (int)dr[1];
-                AllPages.Add(new Page() { ID = ";" + dr[0].ToString() + ";", Company_ID = compID, Custom = (bool)dr[2], Name = dr[3].ToString(), Doc = doc });
+                string compName = "";
+                if (curRole == 0 && dr[5] != DBNull.Value)
+                    compName = dr[5].ToString();
+                AllPages.Add(new Page() { ID = ";" + dr[0].ToString() + ";", Company_ID = compID, Company_Name = compName, Custom = (bool)dr[2], Name = dr[3].ToString(), Doc = doc });
             }
         }
         BookletPages = new List<Page>();
@@ -219,6 +222,7 @@
     {
         public string ID { get; set; }
         public int Company_ID { get; set; }
+        public string Company_Name { get; set; }
         public bool Custom { get; set; }
         public string Name { get; set; }
         public PdfDocument Doc { get; set; }
@@ -228,7 +232,7 @@
         }
         public Page Copy()
         {
-            return new Page() { ID = ID, Company_ID = Company_ID, Custom = Custom, Name = Name, Doc = Doc };
+            return new Page() { ID = ID, Company_ID = Company_ID, Company_Name = Company_Name, Custom = Custom, Name = Name, Doc = Doc };
         }
     }
 }

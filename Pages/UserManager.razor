@@ -1,9 +1,10 @@
-﻿@using Web_Onboard.Data
+﻿@page "/usermanager"
+@using Web_Onboard.Data
 @using System.Data
+@using System.ComponentModel.DataAnnotations
 @inject NavigationManager navigationManager
 @inject AuthenticationStateProvider authenticationStateProvider
 @inject Blazored.SessionStorage.ISessionStorageService sessionStorage
-@page "/usermanager"
 @attribute [Authorize(Roles = "Owner, Manager")]
 
 <h3>User Manager</h3>
@@ -93,68 +94,68 @@
         }*@
     @if (curRole == 0 || curRole == 1)
     {
-<div class="main" style="display: flex; flex-direction: column;">
-    @foreach (DataRow dr in (dt.Rows))
-    {
-        int companyID = (dr["company_id"] == DBNull.Value) ? -1 : (int)dr["company_id"];
-        <div style="display: flex; flex-direction:row; margin: 10px 0 10px 0; text-align: center">
-
-            @if (curCompany == -1 || curCompany == companyID)
+        <div class="main" style="display: flex; flex-direction: column;">
+            @foreach (DataRow dr in (dt.Rows))
             {
-                <span style="font-size: 200%; margin-left: 25px; margin-top: 15px; color: #667">@(dr["user_name"].ToString())</span>
-                companies_dt_joined = Functions.GetDataTableFromSQL("SELECT [name] FROM [companies] WHERE [id] =" + companyID);
-                @*@foreach (DataRow dr1 in (companies_dt_joined.Rows))
-                {
-                    <span style="font-size: 200%; margin-left: 25px; margin-top: 15px; color: #667">@dr1["name"]</span>
-                }*@
-                <button style="height: 50px; width: 50px; border-radius: 50%; background-color: #667; margin: auto 10px auto auto;" @onclick="(e => UserClicked(dr))">
-                    <img src="Images/edit.png" style="height:25px; position: relative; width:25px" />
-                </button>
-              
+                int companyID = (dr["company_id"] == DBNull.Value) ? -1 : (int)dr["company_id"];
+                <div style="display: flex; flex-direction:row; margin: 10px 0 10px 0; text-align: center">
 
+                    @if (curCompany == -1 || curCompany == companyID)
+                    {
+                        <span style="font-size: 200%; margin-left: 25px; margin-top: 15px; color: #667">@(dr["user_name"].ToString())</span>
+                        <span style="font-size: 200%; margin-left: 25px; margin-top: 15px; color: #667">@dr["name"]</span>
+                        @*@foreach (DataRow dr1 in (companies_dt_joined.Rows))
+                            {
+                                <span style="font-size: 200%; margin-left: 25px; margin-top: 15px; color: #667">@dr1["name"]</span>
+                            }*@
+                        <button style="height: 50px; width: 50px; border-radius: 50%; background-color: #667; margin: auto 10px auto auto;" @onclick="(e => UserClicked(dr))">
+                            <img src="Images/edit.png" style="height:25px; position: relative; width:25px" />
+                        </button>
+
+
+
+                    }
+
+
+                </div>
+
+                @if ((int)userSelected == (int)dr[0])
+                {
+                    <div style="display: flex;">
+
+                        <div>
+                            <div style="display: flex; flex-direction: column;">
+                                <span>User Name</span>
+                                <input style="width: 200px" @bind="editedName" type="text" />
+                            </div>
+
+                            <div style="margin-top: 15px; display: flex; flex-direction: column;">
+                                <span style="margin-right: 20px">Role ID</span>
+                                <select @bind="editedRoleID">
+                                    @if (curRole == 0)
+                                    {
+                                        <option value="0">CPMA Admin</option>
+                                    }
+                                    <option value="1">Hiring Manager</option>
+                                    <option value="2">New Hire</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; flex-direction: column;">
+                                <span>Email</span>
+                                <input style="width: 200px" type="text" @bind="editedEmail" />
+                            </div>
+
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px; margin-bottom: 30px">
+                        <button class="btn btn-success" @onclick="(e => UserEdited((int)dr[0]))">Update</button>
+                        <button style="margin-left: 20px" class="btn btn-danger">Delete</button>
+                    </div>
+                }
 
             }
 
-
         </div>
-       
-        @if ((int)userSelected == (int)dr[0])
-        {
-            <div style="display: flex;">
-
-                <div>
-                    <div style="display: flex; flex-direction: column;">
-                        <span>User Name</span>
-                        <input style="width: 200px" @bind="editedName" type="text" />
-                    </div>
-
-                    <div style="margin-top: 15px; display: flex; flex-direction: column;">
-                        <span style="margin-right: 20px">Role ID</span>
-                        <select @bind ="editedRoleID">
-                            @if (curRole == 0)
-                            {
-                                <option value="0" >CPMA Admin</option>
-                            }
-                            <option value="1" >Hiring Manager</option>
-                            <option value="2" >New Hire</option>
-                        </select>
-                    </div>
-                    <div style="display: flex; flex-direction: column;">
-                        <span>Email</span>
-                        <input style="width: 200px"   type="text"@bind="editedEmail" />
-                    </div>
-
-                </div>
-            </div>
-            <div style="margin-top: 20px; margin-bottom: 30px">
-                <button class="btn btn-success" @onclick="(e => UserEdited((int)dr[0]))">Update</button>
-                <button style="margin-left: 20px" class="btn btn-danger">Delete</button>
-            </div>
-        }
-
-    }
-
-</div>
 
     }
 
@@ -182,144 +183,159 @@
 </div>
 
 
-    @code{
-        private AddUser user = new AddUser();
-        private string errorMessage = "";
-        private string successMessage = "";
-        private DataTable dt;
-        private DataTable companies_dt;
-        private DataTable companies_dt_joined;
+@code{
+    private AddUser user = new AddUser();
+    private string errorMessage = "";
+    private string successMessage = "";
+    private DataTable dt;
+    private DataTable companies_dt;
+    private DataTable companies_dt_joined;
 
-        private int curCompany = -1;
-        private int curRole = -1;
-        //default passord
-        private string passWord = "cpma";
-        private bool addButtonClicked = false;
-        //validate if the role id is not 0,1,2
-        private int rowcount = 0;
-        private int userTobeDeleted = 0;
-        private string userTobeDeletedName = "";
-        private bool showModal = false;
-        private int userSelected = 0;
-        private int prevClicked = 0;
-        private int companyIDclicked = 0;
-        private string editedName = "";
-        private string editedEmail = "";
-        private int editedRoleID = 999;
-        private bool userSelect_view = false;
-        private string roleName = "";
+    private int curCompany = -1;
+    private int curRole = -1;
+    //default passord
+    private string passWord = "cpma";
+    private bool addButtonClicked = false;
+    //validate if the role id is not 0,1,2
+    private int rowcount = 0;
+    private int userTobeDeleted = 0;
+    private string userTobeDeletedName = "";
+    private bool showModal = false;
+    private int userSelected = 0;
+    private int prevClicked = 0;
+    private int companyIDclicked = 0;
+    private string editedName = "";
+    private string editedEmail = "";
+    private int editedRoleID = 999;
+    private bool userSelect_view = false;
+    private string roleName = "";
 
-        protected override async Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
+    {
+        int? tempComp = await sessionStorage.GetItemAsync<int>("companyId");
+        if (tempComp.HasValue)
         {
-            int? tempComp = await sessionStorage.GetItemAsync<int>("companyId");
-            if (tempComp.HasValue)
-            {
-                curCompany = tempComp.Value;
-            }
-            int? tempRole = await sessionStorage.GetItemAsync<int>("roleId");
-            if (tempRole.HasValue)
-            {
-                curRole = tempRole.Value;
-            }
-            if (curRole == 0)
-            {
-                companies_dt = Functions.GetDataTableFromSQL("SELECT [id], [name] FROM [companies]");
-                dt = Functions.GetDataTableFromSQL("SELECT [id], [user_name], [role_id], [company_id], [email] FROM [users]");
-
-            }
-            else
-            {
-                dt = Functions.GetDataTableFromSQL("SELECT [id], [user_name], [role_id], [company_id], [email] FROM [users] WHERE [company_id]=" + curCompany.ToString());
-            }
+            curCompany = tempComp.Value;
         }
-
-        //check if the add user button is clicked
-        public void UserAddedButtonToggle()
+        int? tempRole = await sessionStorage.GetItemAsync<int>("roleId");
+        if (tempRole.HasValue)
         {
-            addButtonClicked = !addButtonClicked;
+            curRole = tempRole.Value;
         }
-        //Action for user insert button
-        public void UserAddedComplete()
+        if (curRole == 0)
         {
-
-            if (String.IsNullOrWhiteSpace(user.username))
-            {
-                errorMessage = "Must have username";
-            }
-            else
-            {
-                Functions.GetDataTableFromSQL($"INSERT INTO users(user_name,role_id,password,email,company_id) VALUES('{user.username}',{user.role_id},'{passWord}','{user.email}',{curCompany})");
-                addButtonClicked = false;
-                //reload page
-                successMessage = "Successfull!";
-
-                StateHasChanged();
-            }
+            companies_dt = Functions.GetDataTableFromSQL("SELECT [id], [name] FROM [companies]");
+            dt = Functions.GetDataTableFromSQL("SELECT u.[id], u.[user_name], u.[role_id], u.[company_id], u.[email], c.[name] FROM [users] u left join [companies] c on u.company_id=c.id");
 
         }
-        public void UserClicked(System.Data.DataRow a)
+        else
         {
-            //Determines if the user edit window is already open, if so it will close it
-            if ((int)a[0] == prevClicked)
-            {
-                prevClicked = 0;
-                userSelected = 0;
-                return;
-            }
-            prevClicked = (int)a[0];
-            userSelected = (int)a[0];
-            editedName = a["user_name"].ToString();
-            editedEmail = a["email"].ToString();
-            editedRoleID = (int)a["role_id"];
-            companyIDclicked = (a["company_id"] == DBNull.Value) ? -1 : (int)a["company_id"];
-    
-            StateHasChanged();
-
-
-        }
- 
-
-        public async void CompanyChanged(ChangeEventArgs e)
-        {
-            curCompany = Int32.Parse(e.Value.ToString());
-            ((CustomAuthenticationStateProvider)authenticationStateProvider).setCompanyId(curCompany);
-            StateHasChanged();
-        }
-        //When user is finished editing and click "Edit User" button
-        public void UserEdited(int UserID)
-        {
-            //if they have not added a name, do nothing
-            if (editedName.Length < 1)
-            {
-                errorMessage = "Must Add a User Name!";
-
-                return;
-            }
-
-            if (editedRoleID == 999)
-            {
-                errorMessage = "Must Add a Role!";
-                @*Functions.GetDataTableFromSQL($"UPDATE companies SET name = '{editedName}', image = CONVERT(VARBINARY(MAX), '{imageURLFromEdited}') WHERE id = '{companyID}'");*@
-            }
-            if(editedEmail.Length > 1)
-            {
-                Functions.GetDataTableFromSQL($"UPDATE users SET user_name = '{editedName}',role_id = '{editedRoleID}',email = '{editedEmail}' WHERE id = '{UserID}'");
-            }
-            else
-            {
-                Functions.GetDataTableFromSQL($"UPDATE users SET user_name = '{editedName}',role_id = '{editedRoleID}' WHERE id = '{UserID}'");
-            }
-
-
-            //resetting data table and values
-
-            editedName = "";
-            editedRoleID = 999;
-            editedEmail = "";
-
-            userSelected = 0;
-            prevClicked = 0;
-
-            StateHasChanged();
+            dt = Functions.GetDataTableFromSQL("SELECT [id], [user_name], [role_id], [company_id], [email] FROM [users] WHERE [company_id]=" + curCompany.ToString());
         }
     }
+
+    //check if the add user button is clicked
+    public void UserAddedButtonToggle()
+    {
+        addButtonClicked = !addButtonClicked;
+    }
+    //Action for user insert button
+    public void UserAddedComplete()
+    {
+
+        if (String.IsNullOrWhiteSpace(user.username))
+        {
+            errorMessage = "Must have username";
+        }
+        else
+        {
+            Functions.GetDataTableFromSQL($"INSERT INTO users(user_name,role_id,password,email,company_id) VALUES('{user.username}',{user.role_id},'{passWord}','{user.email}',{curCompany})");
+            addButtonClicked = false;
+            //reload page
+            successMessage = "Successfull!";
+
+            StateHasChanged();
+        }
+
+    }
+    public void UserClicked(System.Data.DataRow a)
+    {
+        //Determines if the user edit window is already open, if so it will close it
+        if ((int)a[0] == prevClicked)
+        {
+            prevClicked = 0;
+            userSelected = 0;
+            return;
+        }
+        prevClicked = (int)a[0];
+        userSelected = (int)a[0];
+        editedName = a["user_name"].ToString();
+        editedEmail = a["email"].ToString();
+        editedRoleID = (int)a["role_id"];
+        companyIDclicked = (a["company_id"] == DBNull.Value) ? -1 : (int)a["company_id"];
+
+        StateHasChanged();
+
+
+    }
+
+
+    public async void CompanyChanged(ChangeEventArgs e)
+    {
+        curCompany = Int32.Parse(e.Value.ToString());
+        ((CustomAuthenticationStateProvider)authenticationStateProvider).setCompanyId(curCompany);
+        StateHasChanged();
+    }
+    //When user is finished editing and click "Edit User" button
+    public void UserEdited(int UserID)
+    {
+        //if they have not added a name, do nothing
+        if (editedName.Length < 1)
+        {
+            errorMessage = "Must Add a User Name!";
+
+            return;
+        }
+
+        if (editedRoleID == 999)
+        {
+            errorMessage = "Must Add a Role!";
+            @*Functions.GetDataTableFromSQL($"UPDATE companies SET name = '{editedName}', image = CONVERT(VARBINARY(MAX), '{imageURLFromEdited}') WHERE id = '{companyID}'");*@
+        }
+        if (editedEmail.Length > 1)
+        {
+            Functions.GetDataTableFromSQL($"UPDATE users SET user_name = '{editedName}',role_id = '{editedRoleID}',email = '{editedEmail}' WHERE id = '{UserID}'");
+        }
+        else
+        {
+            Functions.GetDataTableFromSQL($"UPDATE users SET user_name = '{editedName}',role_id = '{editedRoleID}' WHERE id = '{UserID}'");
+        }
+
+
+        //resetting data table and values
+
+        editedName = "";
+        editedRoleID = 999;
+        editedEmail = "";
+
+        userSelected = 0;
+        prevClicked = 0;
+
+        StateHasChanged();
+    }
+
+    public class AddUser
+    {
+        [Required]
+        public string username { get; set; }
+        public string role_id { get; set; }
+        public string email { get; set; }
+
+        public AddUser()
+        {
+            username = "";
+            role_id = "";
+            email = "";
+        }
+    }
+}

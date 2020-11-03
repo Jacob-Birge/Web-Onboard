@@ -83,6 +83,11 @@ namespace Web_Onboard.Data
             return await Task.FromResult(new AuthenticationState(user));
         }
 
+        public void MarkUserAsAuthenticated()
+        {
+            MarkUserAsAuthenticated(_username, _userId, _roleId, _companyId);
+        }
+
         public async void MarkUserAsAuthenticated(string username, int userId, int roleId, int companyId)
         {
             _username = username;
@@ -116,6 +121,18 @@ namespace Web_Onboard.Data
             NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(user)));
         }
 
+        public async void HoldForReset(string username, int userId, int roleId, int companyId)
+        {
+            _username = username;
+            await _sessionStorageService.SetItemAsync("username", username);
+            _userId = userId;
+            await _sessionStorageService.SetItemAsync("userId", userId);
+            _roleId = roleId;
+            await _sessionStorageService.SetItemAsync("roleId", roleId);
+            _companyId = companyId;
+            await _sessionStorageService.SetItemAsync("companyId", companyId);
+        }
+
         public void MarkUserAsLoggedOut()
         {
             _sessionStorageService.RemoveItemAsync("username");
@@ -131,18 +148,32 @@ namespace Web_Onboard.Data
             ClaimsPrincipal user = new ClaimsPrincipal(identity);
             NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(user)));
         }
-
         public string getUsername()
         {
             return _username;
+        }
+        public async void setUsername(string username)
+        {
+            _username = username;
+            await _sessionStorageService.SetItemAsync("username", username);
         }
         public int getUserId()
         {
             return _userId;
         }
+        public async void setUserId(int userId)
+        {
+            _userId = userId;
+            await _sessionStorageService.SetItemAsync("userId", userId);
+        }
         public int getRoleId()
         {
             return _roleId;
+        }
+        public async void setRoleId(int roleId)
+        {
+            _roleId = roleId;
+            await _sessionStorageService.SetItemAsync("roleId", roleId);
         }
         public int getCompanyId()
         {
@@ -151,7 +182,7 @@ namespace Web_Onboard.Data
         public async void setCompanyId(int companyId)
         {
             _companyId = companyId;
-            await _sessionStorageService.SetItemAsync("companyId", _companyId);
+            await _sessionStorageService.SetItemAsync("companyId", companyId);
         }
     }
 }

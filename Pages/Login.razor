@@ -2,6 +2,7 @@
 @layout LoginLayout
 @using Web_Onboard.Data
 @using System.Data
+@using System.ComponentModel.DataAnnotations
 @inject NavigationManager navigationManager
 @inject AuthenticationStateProvider authenticationStateProvider
 
@@ -32,9 +33,12 @@
                             <InputCheckbox type="checkbox" id="addition" name="rememberMe" @bind-Value=user.remember />
                             Remember Me
                         </td>
-                        <td style="text-align: right;">
-                            <a href="?">Forgot password?</a>
-                        </td>
+                        @if (false)
+                        {
+                            <td style="text-align: right;">
+                                <a href="?">Forgot password?</a>
+                            </td>
+                        }
                     </tr>
                 </table>
                 <br />
@@ -59,7 +63,7 @@
 
     protected async Task<bool> ValidateUser()
     {
-        DataTable dt = Functions.GetDataTableFromSQL("SELECT [id], [role_id], [company_id], [user_name], [password] FROM [users] WHERE [user_name] = '" + user.username + "' AND [password] = '" + user.password + "'");
+        DataTable dt = Functions.GetDataTableFromSQL("SELECT [id], [role_id], [company_id], [user_name], [password], [reset_pass] FROM [users] WHERE [user_name] = '" + user.username + "' AND [password] = '" + user.password + "'");
 
         if (dt.Rows.Count > 0)
         {
@@ -67,12 +71,20 @@
             string pass = (string)(dt.Rows[0][4]);
             if (username.Equals(user.username) && pass.Equals(user.password))
             {
-                int userId = (int)(dt.Rows[0][0]);
-                int roleId = (int)(dt.Rows[0][1]);
-                int companyId = (dt.Rows[0][2] == System.DBNull.Value) ? -1 : (int)dt.Rows[0][2];
-                ((CustomAuthenticationStateProvider)authenticationStateProvider).MarkUserAsAuthenticated(user.username, userId, roleId, companyId);
+                if ((bool)dt.Rows[0][5])
+                {
+                    ((CustomAuthenticationStateProvider)authenticationStateProvider).HoldForReset((string)(dt.Rows[0][3]), (int)(dt.Rows[0][0]), (int)(dt.Rows[0][1]), (int)(dt.Rows[0][2]));
+                    navigationManager.NavigateTo("/resetpassword");
+                }
+                else
+                {
+                    int userId = (int)(dt.Rows[0][0]);
+                    int roleId = (int)(dt.Rows[0][1]);
+                    int companyId = (dt.Rows[0][2] == System.DBNull.Value) ? -1 : (int)dt.Rows[0][2];
+                    ((CustomAuthenticationStateProvider)authenticationStateProvider).MarkUserAsAuthenticated(user.username, userId, roleId, companyId);
 
-                navigationManager.NavigateTo("/dashboard");
+                    navigationManager.NavigateTo("/dashboard");
+                }
             }
             else
             {
@@ -85,5 +97,18 @@
             errorMessage = "Incorrect user name or password";
         }
         return await Task.FromResult(true);
+    }
+
+    public class User
+    {
+        [Required]
+        public string username { get; set; }
+        [Required]
+        public string password { get; set; }
+        public bool remember { get; set; }
+        public User()
+        {
+            remember = true;
+        }
     }
 }
