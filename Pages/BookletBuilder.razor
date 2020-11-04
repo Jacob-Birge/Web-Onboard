@@ -7,28 +7,37 @@
 @inject AuthenticationStateProvider authenticationStateProvider
 @inject Blazored.SessionStorage.ISessionStorageService sessionStorage
 
-<h3>Booklet Builder</h3>
 
-@if (curRole == 0)
-{
-    <div style="justify-content:center;align-items:center;text-align:center">
-        <h4 style="display:inline-block;align-content:center; margin-left:auto;"> Current Company: </h4>
-        <select @onchange="CompanyChanged" style="display: inline-block; margin-right:auto;">
-            <option value="-1"></option>
-            @foreach (DataRow dr in companies_dt.Rows)
-            {
-                if (curCompany == (int)dr[0])
-                {
-                    <option value="@dr[0].ToString()" selected>@dr[1].ToString()</option>
-                }
-                else
-                {
-                    <option value="@dr[0].ToString()">@dr[1].ToString()</option>
-                }
-            }
-        </select>
+<div style="display: flex; flex-direction: row;">
+    <div style="flex: 1 1 0px;">
+        <h3>Booklet Builder</h3>
     </div>
-}
+    <div style="flex: 1 1 0px;">
+        @if (curRole == 0)
+        {
+            <div style="justify-content:center;align-items:center;text-align:center">
+                <h4 style="display:inline-block;align-content:center; margin-left:auto;"> Current Company: </h4>
+                <select @onchange="CompanyChanged" style="display: inline-block; margin-right:auto;">
+                    <option value="-1"></option>
+                    @foreach (DataRow dr in companies_dt.Rows)
+                    {
+                        if (curCompany == (int)dr[0])
+                        {
+                            <option value="@dr[0].ToString()" selected>@dr[1].ToString()</option>
+                        }
+                        else
+                        {
+                            <option value="@dr[0].ToString()">@dr[1].ToString()</option>
+                        }
+                    }
+                </select>
+            </div>
+        }
+    </div>
+    <div style="flex: 1 1 0px;">
+    </div>
+</div>
+
 
 @if (curRole == 0)
 {
@@ -58,9 +67,21 @@
             }
         }
     </table>
+    <br />
     @if (BookletPages.Count > 0)
     {
         <div style="justify-content: center; align-items: center; text-align: center; width:auto; margin:auto;">
+            <h4 style="display:inline-block;align-content:center; margin-left:auto;"> Employee: </h4>
+            <select @onchange="UserChanged" style="display: inline-block; margin-right:auto;">
+                <option value="-1" selected></option>
+                @foreach (DataRow dr in users_dt.Rows)
+                {
+                    if (curCompany == -1 || curCompany == (int)dr[2])
+                    {
+                        <option value="@dr[0].ToString()">@dr[1].ToString()</option>
+                    }
+                }
+            </select>
             <button @onclick="SaveBooklet">Save Booklet</button>
             <ul ondragover="event.preventDefault();" class="list-group list-group-horizontal" style="margin: auto">
                 @foreach (Page item in BookletPages)
@@ -82,7 +103,9 @@
 @code {
     DataTable dt;
     DataTable companies_dt;
+    DataTable users_dt;
     int curCompany = -1;
+    int curUser = -1;
     int curRole = -1;
 
     List<Page> AllPages;
@@ -104,10 +127,12 @@
         {
             companies_dt = Functions.GetDataTableFromSQL("SELECT [id], [name] FROM [companies]");
             dt = Functions.GetDataTableFromSQL("SELECT p.[id], p.[company_id], p.[custom_page], p.[name], p.[file], c.[name] FROM [pages] p left join [companies] c on p.company_id=c.id");
+            users_dt = Functions.GetDataTableFromSQL("SELECT [id], [user_name], [company_id] FROM [users] WHERE [role_id]=2");
         }
         else
         {
             dt = Functions.GetDataTableFromSQL("SELECT [id], [company_id], [custom_page], [name], [file] FROM [pages] WHERE [company_id]=" + curCompany.ToString());
+            users_dt = Functions.GetDataTableFromSQL("SELECT [id], [user_name], [company_id] FROM [users] WHERE [role_id]=2 and [company_id]=" + curCompany.ToString());
         }
         AllPages = new List<Page>();
         foreach (DataRow dr in dt.Rows)
@@ -134,6 +159,11 @@
         curCompany = Int32.Parse(e.Value.ToString());
         ((CustomAuthenticationStateProvider)authenticationStateProvider).setCompanyId(curCompany);
         StateHasChanged();
+    }
+
+    public void UserChanged(ChangeEventArgs e)
+    {
+        curUser = Int32.Parse(e.Value.ToString());
     }
 
     int currentIndex;

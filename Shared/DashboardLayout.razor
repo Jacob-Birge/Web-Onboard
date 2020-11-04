@@ -1,4 +1,7 @@
 ﻿@inherits LayoutComponentBase
+@using Web_Onboard.Data 
+@inject NavigationManager navigationManager
+@inject AuthenticationStateProvider authenticationStateProvider
 
 <div class="sidebar">
     <NavMenu />
@@ -6,9 +9,45 @@
 
 <div class="main">
     <div class="top-row px-4">
+        <div style="float:right; margin-top: .5rem; margin-bottom: 1rem;">
+            <AuthorizeView>
+                <Authorized>
+                    <span>@name</span>
+                    <button class="btn btn-dark" @onclick='@(e => ButtonReroute("/editprofile"))'>Edit Profile</button>
+                </Authorized>
+            </AuthorizeView>
+            <button class="btn btn-danger" @onclick='@(e => ButtonReroute("/logout"))'>Logout</button>
+        </div>
     </div>
 
     <div class="content px-4">
         @Body
     </div>
 </div>
+
+@code{
+    string name = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        string first = ((CustomAuthenticationStateProvider)authenticationStateProvider).getFirstName();
+        string last = ((CustomAuthenticationStateProvider)authenticationStateProvider).getLastName();
+        if (string.IsNullOrWhiteSpace(first) && string.IsNullOrWhiteSpace(last))
+        {
+            name = "No Name";
+        }
+        else if (string.IsNullOrWhiteSpace(first) || string.IsNullOrWhiteSpace(last))
+        {
+            name = (string.IsNullOrWhiteSpace(first)) ? last : first;
+        }
+        else
+        {
+            name = first + " " + last;
+        }
+    }
+
+    private void ButtonReroute(String path)
+    {
+        navigationManager.NavigateTo(path);
+    }
+}

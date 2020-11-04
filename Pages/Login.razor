@@ -63,7 +63,7 @@
 
     protected async Task<bool> ValidateUser()
     {
-        DataTable dt = Functions.GetDataTableFromSQL("SELECT [id], [role_id], [company_id], [user_name], [password], [reset_pass] FROM [users] WHERE [user_name] = '" + user.username + "' AND [password] = '" + user.password + "'");
+        DataTable dt = Functions.GetDataTableFromSQL("SELECT [id], [role_id], [company_id], [user_name], [password], [reset_pass], [first_name], [last_name], [email] FROM [users] WHERE [user_name] = '" + user.username + "' AND [password] = '" + user.password + "'");
 
         if (dt.Rows.Count > 0)
         {
@@ -71,17 +71,17 @@
             string pass = (string)(dt.Rows[0][4]);
             if (username.Equals(user.username) && pass.Equals(user.password))
             {
+                int userId = (int)(dt.Rows[0][0]);
+                int roleId = (int)(dt.Rows[0][1]);
+                int companyId = (dt.Rows[0][2] == System.DBNull.Value) ? -1 : (int)dt.Rows[0][2];
                 if ((bool)dt.Rows[0][5])
                 {
-                    ((CustomAuthenticationStateProvider)authenticationStateProvider).HoldForReset((string)(dt.Rows[0][3]), (int)(dt.Rows[0][0]), (int)(dt.Rows[0][1]), (int)(dt.Rows[0][2]));
+                    ((CustomAuthenticationStateProvider)authenticationStateProvider).HoldForReset((string)(dt.Rows[0][3]), userId, roleId, companyId, dt.Rows[0][6].ToString(), dt.Rows[0][7].ToString(), dt.Rows[0][8].ToString());
                     navigationManager.NavigateTo("/resetpassword");
                 }
                 else
                 {
-                    int userId = (int)(dt.Rows[0][0]);
-                    int roleId = (int)(dt.Rows[0][1]);
-                    int companyId = (dt.Rows[0][2] == System.DBNull.Value) ? -1 : (int)dt.Rows[0][2];
-                    ((CustomAuthenticationStateProvider)authenticationStateProvider).MarkUserAsAuthenticated(user.username, userId, roleId, companyId);
+                    ((CustomAuthenticationStateProvider)authenticationStateProvider).MarkUserAsAuthenticated(user.username, userId, roleId, companyId, dt.Rows[0][6].ToString(), dt.Rows[0][7].ToString(), dt.Rows[0][8].ToString());
 
                     navigationManager.NavigateTo("/dashboard");
                 }

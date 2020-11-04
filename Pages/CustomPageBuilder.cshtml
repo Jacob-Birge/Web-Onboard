@@ -40,16 +40,30 @@
 
         <div class="main">
             <div class="top-row px-4">
+                <div style="float:right; margin-top: .5rem; margin-bottom: 1rem;">
+                    <span>@Model.name</span>
+                    <button class="btn btn-dark" onclick="location.href = '/editprofile';">Edit Profile</button>
+                    <button class="btn btn-danger" onclick="location.href = '/logout';">Logout</button>
+                </div>
             </div>
             <div class="content px-4">
-                @if (Model.roleId == 0)
-                {
-                    <div style="align-content:center;text-align:center">
-                        <h4 style="display:inline"> Current Company: </h4>
-                        @Html.DropDownList("companySelection", Model.companyListItems, new { @onchange = "changeCompany(this.value)", @style = "display:inline-block; margin:auto;" })
+                <div style="display: flex; flex-direction: row;">
+                    <div style="flex: 1 1 0px;">
+                        <h3 style="display:inline"> Custom Page Builder </h3>
                     </div>
-                    <br />
-                }
+                    <div style="flex: 1 1 0px;">
+                        @if (Model.roleId == 0)
+                        {
+                            <div style="align-content:center;text-align:center">
+                                <h4 style="display:inline"> Current Company: </h4>
+                                @Html.DropDownList("companySelection", Model.companyListItems, new { @onchange = "changeCompany(this.value)", @style = "display:inline-block; margin:auto;" })
+                            </div>
+                            <br />
+                        }
+                    </div>
+                    <div style="flex: 1 1 0px;">
+                    </div>
+                </div>
 
                 <div id="errorMessage" class="alert alert-danger" style="display:none">
                     Failed to upload file.<br />
@@ -65,15 +79,12 @@
                     Successfully uploaded file.
                 </div>
 
-                <div style="padding:0px 0px 0px 0px;">
-                    <h3 style="display:inline"> Custom Page Builder </h3>
-                    <div style="display:inline; width:100%;">
-                        <button class="btn btn-primary" style="float: right;" onclick="genPDF();"> Save </button>
-                        <input type="text" class="form-control" id="filename" placeholder="File Name" style="text-align:center; float:right; width: 25%; padding:0px 5px 0px 0px;">
-                    </div>
+                <div style="text-align:center;margin:auto;">
+                    <input type="text" class="form-control" id="filename" placeholder="File Name" style="display:inline; text-align:center; width: 25%; padding:0px 5px 0px 0px;">
+                    <button class="btn btn-primary" onclick="genPDF();"> Save </button>
                 </div>
                 <br />
-                <div style="width: 8.3in;margin: auto;">
+                <div style="width: 8.3in;margin: auto;padding-bottom:20px;">
                     <div id="display"></div>
                     <div id="toolbar"></div>
                     <div id="editor" style="height: 11.685in; width: 8.3in;margin: auto;"></div>

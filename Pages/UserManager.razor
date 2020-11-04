@@ -6,11 +6,64 @@
 @inject AuthenticationStateProvider authenticationStateProvider
 @inject Blazored.SessionStorage.ISessionStorageService sessionStorage
 @attribute [Authorize(Roles = "Owner, Manager")]
+<div style="display: flex; flex-direction: row;">
+    <div style="flex: 1 1 0px;">
+        <h3>User Manager</h3>
+    </div>
+    <div style="flex: 1 1 0px;">
+        @if (curRole == 0)
+        {
+            <div style="align-content:center;text-align:center;margin:auto;">
+                <h4 style="display:inline;"> Current Company: </h4>
+                <select @onchange="CompanyChanged" style="display: inline-block; margin: auto;">
+                    <option value="-1"></option>
+                    @foreach (DataRow dr in companies_dt.Rows)
+                    {
+                        if (curCompany == (int)dr[0])
+                        {
+                            <option value="@dr[0].ToString()" selected>@dr[1].ToString()</option>
+                        }
+                        else
+                        {
+                            <option value="@dr[0].ToString()">@dr[1].ToString()</option>
+                        }
+                    }
+                </select>
+            </div>
+        }
+    </div>
+    <div style="flex: 1 1 0px;">
+        <button style="float: right; margin-left: auto;" class="btn btn-primary" @onclick="UserAddedButtonToggle">Add Users</button>
+    </div>
+</div>
+<br /><br />
+@if (addButtonClicked)
+{
+    <div style="margin: auto; text-align: center;">
+        <EditForm Model="@user" Context="addUser">
+            <DataAnnotationsValidator />
+            <label style="width:100px; text-align:left;">User Name:</label>
+            <input type="text" style="width:150px; height:30px;" @bind="user.username">
+            <br>
+            <label style="width:100px; text-align:left;">Role ID:</label>
+            <select @bind="user.role_id" style="width:150px; height:30px;">
+                @if (curRole == 0)
+                {
+                    <option value="0">CPMA Admin</option>
+                }
+                <option value="1">Hiring Manager</option>
+                <option value="2">New Hire</option>
+            </select>
+            <br>
+            <label style="width:100px; text-align:left;">Email:</label>
+            <input type="text" style="width:150px; height:30px;" @bind="user.email">
+            <br><br>
+            <button class="btn btn-success" @onclick="UserAddedComplete">Add</button>
+        </EditForm>
+    </div>
+}
 
-<h3>User Manager</h3>
-<button style="float: right; margin-left: auto;" class="btn btn-primary" @onclick="UserAddedButtonToggle">Add Users</button>
-
-<div style="width: 90%; padding: 5%; background-color: #fff; text-align: left;">
+<div style="width: 100%; text-align: left;">
     @if (errorMessage != "")
     {
         StateHasChanged();
@@ -21,147 +74,63 @@
     {
         <div id="successMessage" class="alert alert-success">@successMessage</div>
     }
-    @if (addButtonClicked)
-    {
-        <EditForm Model="@user" Context="addUser">
-            <DataAnnotationsValidator />
-            <label>User Name:</label>
-            <input type="text" @bind="user.username">
-            <br>
-            <label>Role ID:</label>
-            <select @bind="user.role_id">
-                @if (curRole == 0)
-                {
-                    <option value="0">CPMA Admin</option>
-                }
-                <option value="1">Hiring Manager</option>
-                <option value="2">New Hire</option>
-            </select>
-            <br>
-            <label>Email:</label>
-            <input type="text" @bind="user.email">
-
-            <br><br>
-            <button class="btn btn-success" @onclick="UserAddedComplete">Add</button>
-        </EditForm>
-    }
-    @if (curRole == 0)
-    {
-        <div style="align-content:center;text-align:center">
-            <h4 style="display:inline"> Current Company: </h4>
-            <select @onchange="CompanyChanged" style="display: inline-block; margin: auto;">
-                <option value="-1"></option>
-                @foreach (DataRow dr in companies_dt.Rows)
-                {
-                    if (curCompany == (int)dr[0])
-                    {
-                        <option value="@dr[0].ToString()" selected>@dr[1].ToString()</option>
-                    }
-                    else
-                    {
-                        <option value="@dr[0].ToString()">@dr[1].ToString()</option>
-                    }
-                }
-            </select>
-        </div>
-    }
-    @*{
-        <h2>User Table</h2>
-        <table>
-            <tr>
-                <th>User Name</th>
-                <th>Email</th>
-                <th>Role ID</th>
-                <th>Company ID</th>
-            </tr>
-            <div class="main" style="display: flex; flex-direction: column;">
-                @foreach (DataRow dr in (dt.Rows))
-                {
-                    int companyID = (dr["company_id"] == DBNull.Value) ? -1 : (int)dr["company_id"];
-                    @if (curCompany == -1 || curCompany == companyID)
-                    {
-                        //Users Table
-                        <tr>
-                            <td>@(dr["user_name"].ToString())</td>
-                            <td>@(dr["email"].ToString())</td>
-                            <td>@((int)dr["role_id"])</td>
-                            <td>@companyID</td>
-
-                        </tr>
-                    }
-                }
-        </table>
-        }*@
     @if (curRole == 0 || curRole == 1)
     {
-<div class="main" style="display: flex; flex-direction: column;">
+        <div class="main" style="display: flex; flex-direction: column;">
 
-    @foreach (DataRow dr in (dt.Rows))
-    {
-        int companyID = (dr["company_id"] == DBNull.Value) ? -1 : (int)dr["company_id"];
-        <div style="display: flex; flex-direction:row; margin: 10px 0 10px 0; text-align: center">
-
-            @if (curCompany == -1 || curCompany == companyID)
+            @foreach (DataRow dr in (dt.Rows))
             {
-                <span style="font-size: 200%; margin-left: 25px; margin-top: 15px; color: #667">@(dr["user_name"].ToString())</span>
-                <span style="font-size: 200%; margin-left: 25px; margin-top: 15px; color: #667">@dr["name"]</span>
-                <!--companies_dt_joined = Functions.GetDataTableFromSQL("SELECT [name] FROM [companies] WHERE [id] =" + companyID);-->
-                @*@foreach (DataRow dr1 in (companies_dt_joined.Rows))
+                int companyID = (dr["company_id"] == DBNull.Value) ? -1 : (int)dr["company_id"];
+                <div style="display: flex; flex-direction:row; margin: 10px 0 10px 0; text-align: center">
+                    @if (curCompany == -1 || curCompany == companyID)
                     {
-                        <span style="font-size: 200%; margin-left: 25px; margin-top: 15px; color: #667">@dr1["name"]</span>
-                    }*@
-                <button style="height: 50px; width: 50px; border-radius: 50%; background-color: #667; margin: auto 10px auto auto;" @onclick="(e => UserClicked(dr))">
-                    <img src="Images/edit.png" style="height:25px; position: relative; width:25px" />
-                </button>
+                        <span style="font-size: 200%; margin-left: 25px; margin-top: 15px; color: #667">@(dr["user_name"].ToString())</span>
+                        @if (curRole == 0)
+                        {
+                            <span style="font-size: 200%; margin-left: 25px; margin-top: 15px; color: #667">@dr["name"]</span>
+                        }
+                        <button style="height: 50px; width: 50px; border-radius: 50%; background-color: #667; margin: auto 10px auto auto;" @onclick="(e => UserClicked(dr))">
+                            <img src="Images/edit.png" style="height:25px; position: relative; width:25px" />
+                        </button>
+                    }
+                </div>
 
+                @if ((int)userSelected == (int)dr[0])
+                {
+                    <div style="display: flex;">
 
+                        <div>
+                            <div style="display: flex; flex-direction: column;">
+                                <span>User Name</span>
+                                <input style="width: 200px" @bind="editedName" type="text" />
+                            </div>
+
+                            <div style="margin-top: 15px; display: flex; flex-direction: column;">
+                                <span style="margin-right: 20px">Role ID</span>
+                                <select @bind="editedRoleID">
+                                    @if (curRole == 0)
+                                    {
+                                        <option value="0">CPMA Admin</option>
+                                    }
+                                    <option value="1">Hiring Manager</option>
+                                    <option value="2">New Hire</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; flex-direction: column;">
+                                <span>Email</span>
+                                <input style="width: 200px" type="text" @bind="editedEmail" />
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px; margin-bottom: 30px">
+                        <button class="btn btn-success" @onclick="(e => UserEdited((int)dr[0]))">Update</button>
+                        <button style="margin-left: 20px" class="btn btn-danger" @onclick="(e => UserDeleted((int)dr[0]))">Delete</button>
+                    </div>
+                }
 
             }
 
-
         </div>
-
-        @if ((int)userSelected == (int)dr[0])
-        {
-            <div style="display: flex;">
-
-                <div>
-                    <div style="display: flex; flex-direction: column;">
-                        <span>User Name</span>
-                        <input style="width: 200px" @bind="editedName" type="text" />
-                    </div>
-
-                    <div style="margin-top: 15px; display: flex; flex-direction: column;">
-                        <span style="margin-right: 20px">Role ID</span>
-                        <select @bind="editedRoleID">
-                            @if (curRole == 0)
-                            {
-                                <option value="0">CPMA Admin</option>
-                            }
-                            <option value="1">Hiring Manager</option>
-                            <option value="2">New Hire</option>
-                        </select>
-                    </div>
-                    <div style="display: flex; flex-direction: column;">
-                        <span>Email</span>
-                        <input style="width: 200px" type="text" @bind="editedEmail" />
-                    </div>
-
-                </div>
-            </div>
-            <div style="margin-top: 20px; margin-bottom: 30px">
-           
-                
-
-                <button class="btn btn-success" @onclick="(e => UserEdited((int)dr[0]))">Update</button>
-                <button style="margin-left: 20px" class="btn btn-danger"@onclick="(e => UserDeleted((int)dr[0]))">Delete</button>
-            </div>
-        }
-
-    }
-
-</div>
-
     }
 
 
@@ -214,7 +183,7 @@
     private int editedRoleID = 999;
     private bool userSelect_view = false;
     private string roleName = "";
-    
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -255,9 +224,7 @@
         }
         else
         {
-            //Not working
-            @*Functions.GetDataTableFromSQL($"INSERT INTO users(user_name,role_id,password,email,company_id) VALUES('{user.username}',{user.role_id},'{passWord}','{user.email}',{curCompany})");*@
-            Functions.GetDataTableFromSQL($"INSERT INTO users(user_name,role_id,password,email) VALUES('{user.username}',{user.role_id},'{passWord}','{user.email}')");
+            Functions.GetDataTableFromSQL($"INSERT INTO users(user_name,role_id,password,email,company_id) VALUES('{user.username}',{user.role_id},'{passWord}','{user.email}',{curCompany})");
             addButtonClicked = false;
             //reload page
             successMessage = "Successfull!";
@@ -283,7 +250,7 @@
         companyIDclicked = (a["company_id"] == DBNull.Value) ? -1 : (int)a["company_id"];
 
         StateHasChanged();
-    
+
 
 
     }
@@ -300,18 +267,18 @@
     {
         //if they have not added a name, do nothing
         @*if (editedName.Length < 1)
-        {
-            errorMessage = "Must Add a User Name!";
+            {
+                errorMessage = "Must Add a User Name!";
 
-            return;
-        }
+                return;
+            }
 
-        if (editedRoleID == 999)
-        {
-            errorMessage = "Must Add a Role!";
-         
-        }*@
-        //Update not displaying to the table right away, must reload the page. 
+            if (editedRoleID == 999)
+            {
+                errorMessage = "Must Add a Role!";
+
+            }*@
+        //Update not displaying to the table right away, must reload the page.
         if (editedEmail.Length > 1)
         {
 

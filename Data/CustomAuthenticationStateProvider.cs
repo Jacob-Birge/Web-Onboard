@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Blazored.SessionStorage;
+using System.Runtime.CompilerServices;
 
 namespace Web_Onboard.Data
 {
@@ -14,6 +15,9 @@ namespace Web_Onboard.Data
         private static int _userId = -1;
         private static int _roleId = -1;
         private static int _companyId = -1;
+        private static string _firstName = "";
+        private static string _lastName = "";
+        private static string _email = "";
 
         private enum Roles
         {
@@ -85,15 +89,18 @@ namespace Web_Onboard.Data
 
         public void MarkUserAsAuthenticated()
         {
-            MarkUserAsAuthenticated(_username, _userId, _roleId, _companyId);
+            MarkUserAsAuthenticated(_username, _userId, _roleId, _companyId, _firstName, _lastName, _email);
         }
 
-        public async void MarkUserAsAuthenticated(string username, int userId, int roleId, int companyId)
+        public async void MarkUserAsAuthenticated(string username, int userId, int roleId, int companyId, string firstName, string lastName, string email)
         {
             _username = username;
             _userId = userId;
             _roleId = roleId;
             _companyId = companyId;
+            _firstName = firstName;
+            _lastName = lastName;
+            _email = email;
 
             await _sessionStorageService.SetItemAsync("username", _username);
             await _sessionStorageService.SetItemAsync("userId", _userId);
@@ -121,7 +128,7 @@ namespace Web_Onboard.Data
             NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(user)));
         }
 
-        public async void HoldForReset(string username, int userId, int roleId, int companyId)
+        public async void HoldForReset(string username, int userId, int roleId, int companyId, string firstName, string lastName, string email)
         {
             _username = username;
             await _sessionStorageService.SetItemAsync("username", username);
@@ -131,6 +138,9 @@ namespace Web_Onboard.Data
             await _sessionStorageService.SetItemAsync("roleId", roleId);
             _companyId = companyId;
             await _sessionStorageService.SetItemAsync("companyId", companyId);
+            _firstName = firstName;
+            _lastName = lastName;
+            _email = email;
         }
 
         public void MarkUserAsLoggedOut()
@@ -143,6 +153,9 @@ namespace Web_Onboard.Data
             _roleId = -1;
             _sessionStorageService.RemoveItemAsync("companyId");
             _companyId = -1;
+            _firstName = "";
+            _lastName = "";
+            _email = "";
 
             ClaimsIdentity identity = new ClaimsIdentity();
             ClaimsPrincipal user = new ClaimsPrincipal(identity);
@@ -183,6 +196,30 @@ namespace Web_Onboard.Data
         {
             _companyId = companyId;
             await _sessionStorageService.SetItemAsync("companyId", companyId);
+        }
+        public string getFirstName()
+        {
+            return _firstName;
+        }
+        public void setFirstName(string firstname)
+        {
+            _firstName = firstname;
+        }
+        public string getLastName()
+        {
+            return _lastName;
+        }
+        public void setLastName(string lastname)
+        {
+            _lastName = lastname;
+        }
+        public string getEmail()
+        {
+            return _email;
+        }
+        public void setEmail(string email)
+        {
+            _email = email;
         }
     }
 }

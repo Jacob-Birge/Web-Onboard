@@ -1,0 +1,79 @@
+﻿@page "/editprofile"
+@using System.ComponentModel.DataAnnotations
+@using Web_Onboard.Data 
+@inject AuthenticationStateProvider authenticationStateProvider
+<h3>Edit Profile</h3>
+
+<div style="width: 400px; height: 500px; margin: auto;">
+    <div style="width: 90%; padding: 5%; background-color: #fff; text-align: left;">
+        <EditForm Model="@user" OnValidSubmit="@SaveInfo">
+            <DataAnnotationsValidator />
+            @if (@errorMessage != "")
+            {
+                <div id="errorMessage" class="alert alert-danger">@errorMessage</div>
+            }
+            @if (successMessage != "")
+            {
+                <div id="successMessage" class="alert alert-success">@successMessage</div>
+            }
+            <label for="txtUN" class="label">User Name</label>
+            <InputText ID="txtUN" placeholder="User Name" @bind-Value=user.username autocomplete="off" style="margin: 0; width: 100%; padding: 2px 0;" />
+            <br />
+            <div class="label">First Name</div>
+            <InputText ID="txtFN" placeholder="First Name" @bind-Value=user.first autocomplete="off" style="margin: 0; width: 100%; padding: 2px 0;" />
+            <br />
+            <div class="label">Last Name</div>
+            <InputText ID="txtLN" placeholder="Last Name" @bind-Value=user.last autocomplete="off" style="margin: 0; width: 100%; padding: 2px 0;" />
+            <br />
+            <div class="label">Email</div>
+            <InputText ID="txtE" placeholder="Email" @bind-Value=user.email autocomplete="off" style="margin: 0; width: 100%; padding: 2px 0;" />
+            <br />
+            <br />
+            <input type="submit" value="Save" class="btn btn-primary" style="margin: 0; width: 100%; padding: 12px 0; font-size: 18px;" />
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    User user = new User();
+    int userId;
+    string errorMessage = "";
+    string successMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        CustomAuthenticationStateProvider authStateProvider = (CustomAuthenticationStateProvider)authenticationStateProvider;
+        userId = authStateProvider.getUserId();
+        user.username = authStateProvider.getUsername();
+        user.first = authStateProvider.getFirstName();
+        user.last = authStateProvider.getLastName();
+        user.email = authStateProvider.getEmail();
+    }
+
+    private void SaveInfo()
+    {
+        try
+        {
+            Functions.GetDataTableFromSQL($"UPDATE users SET user_name='{user.username}', first_name='{user.first}', last_name='{user.last}', email='{user.email}' WHERE id={userId}");
+            CustomAuthenticationStateProvider authStateProvider = (CustomAuthenticationStateProvider)authenticationStateProvider;
+            authStateProvider.setUsername(user.username);
+            authStateProvider.setFirstName(user.first);
+            authStateProvider.setLastName(user.last);
+            authStateProvider.setEmail(user.email);
+            successMessage = "Saved info";
+        }
+        catch { errorMessage = "Error while saving"; }
+    }
+
+    public class User
+    {
+        [Required]
+        public string username { get; set; }
+        public string first { get; set; }
+        public string last { get; set; }
+        public string email { get; set; }
+        public User()
+        {
+        }
+    }
+}

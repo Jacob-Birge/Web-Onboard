@@ -13,6 +13,7 @@ namespace Web_Onboard.Pages
         public CustomAuthenticationStateProvider _authStateProvider { get; set; }
         public int companyId { get; set; }
         public int roleId { get; set; }
+        public string name { get; set; }
         public List<SelectListItem> companyListItems { get; set; }
 
         public CustomPageBuilderModel(AuthenticationStateProvider authStateProvider)
@@ -23,12 +24,26 @@ namespace Web_Onboard.Pages
         public void OnGet()
         {
             companyId = _authStateProvider.getCompanyId();
+            string first = _authStateProvider.getFirstName();
+            string last = _authStateProvider.getLastName();
+            if (string.IsNullOrWhiteSpace(first) && string.IsNullOrWhiteSpace(last))
+            {
+                name = "No Name";
+            }
+            else if (string.IsNullOrWhiteSpace(first) || string.IsNullOrWhiteSpace(last))
+            {
+                name = (string.IsNullOrWhiteSpace(first)) ? last : first;
+            }
+            else
+            {
+                name = first + " " + last;
+            }
             CommonInit();
         }
         public void OnGetCompanyChange(string compId)
         {
             companyId = int.Parse(compId);
-            //_authStateProvider.setCompanyId(companyId);
+
             CommonInit();
         }
         private void CommonInit()
