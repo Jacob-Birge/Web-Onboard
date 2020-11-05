@@ -4,8 +4,8 @@
 @using System.Data
 @inject NavigationManager navigationManager
 @inject AuthenticationStateProvider authenticationStateProvider
+@inject IJSRuntime JSRuntime;
 
-<h3>Dashboard</h3>
 <AuthorizeView>
     <Authorizing>
         <p>Authorizing</p>
@@ -13,12 +13,14 @@
 </AuthorizeView>
 <AuthorizeView Roles="Owner">
     <Authorized>
-        <p>Hello @context.User.Identity.Name (Owner)</p>
+        <h3>Dashboard</h3>
+        <h1 style="text-align:center;">Hello@(String.IsNullOrWhiteSpace(firstname) ? "" : ", " + firstname)</h1>
     </Authorized>
 </AuthorizeView>
 <AuthorizeView Roles="Manager">
     <Authorized>
-        <p>Hello (Manager)</p>
+        <h3>Dashboard</h3>
+        <h1 style="text-align:center;">Hello@(String.IsNullOrWhiteSpace(firstname) ? "" : ", " + firstname)</h1>
     </Authorized>
 </AuthorizeView>
 <AuthorizeView Roles="BaseUser">
@@ -35,7 +37,18 @@
             <br />
             @if (dt.Rows.Count > 0)
             {
-
+                @if (dt.Rows.Count == 1)
+                {
+                    <h3>Download your booklet</h3>
+                }
+                else
+                {
+                    <h3>Download your booklets</h3>
+                }
+                foreach (DataRow dr in dt.Rows)
+                {
+                    <button @onclick="() => DownloadBooklet((int)dr[0])">@dr[1].ToString()</button>
+                }
             }
             else
             {
@@ -63,7 +76,16 @@
         curUserId = ((CustomAuthenticationStateProvider)authenticationStateProvider).getUserId();
         if (curRole == 2)
         {
-            dt = Functions.GetDataTableFromSQL($"select b.[name], b.[file] from [booklets] b join [userToBooklet] ub on b.[id]=ub.[booklet_id] join [users] u on ub.[user_id]=u.[id] where u.[id]={curUserId}");
+            dt = Functions.GetDataTableFromSQL($"select b.[id], b.[name] from [booklets] b join [userToBooklet] ub on b.[id]=ub.[booklet_id] join [users] u on ub.[user_id]=u.[id] where u.[id]={curUserId}");
         }
+    }
+
+    async void DownloadBooklet(int id)
+    {
+        try
+        {
+            await JSRuntime.InvokeAsync<object>("open", $"api/downloadfile?table=0&fileId={id}", "_blank");
+        }
+        catch { }
     }
 }

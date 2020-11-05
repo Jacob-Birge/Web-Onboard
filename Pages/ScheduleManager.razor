@@ -1,7 +1,233 @@
 ﻿@page "/schedulemanager"
+@using SelectPdf
+@using Web_Onboard.Data
+@using System.Data
 @attribute [Authorize(Roles = "Owner, Manager")]
+@inject AuthenticationStateProvider authenticationStateProvider
+
+<style type="text/css">
+    body {
+        text-align: left;
+    }
+
+    #pnlGlobal {
+        width: calc(100% - 42px);
+        background-color: #444;
+        font-family: "Century Gothic", 'Lato', sans-serif;
+        color: #eee;
+        padding: 10px 20px;
+        margin: 10px 0;
+    }
+
+    #lbCompanies {
+        padding: 11px 10px;
+    }
+</style>
+
 <h3>Schedule Manager</h3>
+<div ID="upResults">
+    <div ID="lblResults" Class="result-box">@(message)</div>
+    @*If this is global admin, the page display a drop down that filter the user date by their companyID *@
+    @if (curRole == 0)
+    {
+        <div ID="pnlGlobal" Visible="false">
+            <div style="font-size: 20px; margin: 0 10px 0 0; padding-top: 10px; float: left;">Change company:</div>
+            <select id="lbCompanies" @onchange="@CompanyChanged">
+                <option value="-1">Not Selected</option>
+                @foreach (DataRow dr in companies_dt.Rows)
+                {
+                    if (curCompany == (int)dr["id"])
+                    {
+                        <option value="@(dr["id"].ToString())" selected>@(dr["name"].ToString())</option>
+                    }
+                    else
+                    {
+                        <option value="@(dr["id"].ToString())">@(dr["name"].ToString())</option>
+                    }
+                }
+            </select>
+            <div style="float: right; color: #888; padding: 25px 0 0 0;">Global Admin Only</div>
+        </div>
+    }
+</div>
+
+<div style="justify-content: center; align-items: center; text-align: center; width:auto; margin:auto;">
+    @if (@errorMessage != "")
+    {
+        <div id="errorMessage" class="alert alert-danger" style="display:inline-block; margin:auto; text-align: center;">@errorMessage</div>
+        <br />
+        <br />
+    }
+    @if (@successMessage != "")
+    {
+        <div id="successMessage" class="alert alert-success" style="display:inline-block; margin: auto; text-align: center;">@successMessage</div>
+        <br />
+        <br />
+    }
+</div>
+
+<div style="text-align:center;">
+    <input type="text" placeholder="File Name" @bind=filename autocomplete="off" style="display: inline; text-align: center; width: 200px; height: 27px; padding: 0px 5px 0px 0px;" />
+    <button @onclick="SaveSchedule" class="btn btn-primary">Save</button>
+</div>
 
 @code {
+    private DataTable event_dt;
+    private DataTable companies_dt;
+    private DataTable users_dt;
 
+    private DateTime? day = DateTime.Now;
+
+    private List<DataRow> eventsToAdd;
+
+    private int curCompany;
+    private int curRole;
+    private string filename;
+
+    private string errorMessage = "";
+    private string successMessage = "";
+    private string message = "Welcome to the schedule manager!";
+
+    private string scheduletemplate = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        curCompany = ((CustomAuthenticationStateProvider)authenticationStateProvider).getCompanyId();
+        curRole = ((CustomAuthenticationStateProvider)authenticationStateProvider).getRoleId();
+        if (curRole == 0)
+        {
+            companies_dt = Functions.GetDataTableFromSQL("SELECT [id], [name] FROM [companies]");
+            users_dt = Functions.GetDataTableFromSQL("SELECT [id], [user_name], [company_id] FROM [users] WHERE [role_id]=2 and [active]=1");
+            event_dt = Functions.GetDataTableFromSQL("SELECT [id], [title], [res_party], [description], [company_id] FROM [items]");
+        }
+        else
+        {
+            users_dt = Functions.GetDataTableFromSQL("SELECT [id], [user_name], [company_id] FROM [users] WHERE [role_id]=2 and [active]=1 and [company_id]=" + curCompany.ToString());
+            event_dt = Functions.GetDataTableFromSQL("SELECT [id], [title], [res_party], [description], [company_id] FROM [items] WHERE [company_id]=" + curCompany.ToString());
+        }
+        initTemplate();
+        StateHasChanged();
+    }
+
+    private void initTemplate()
+    {
+        scheduletemplate = "<div style='width:11.685in;'><div class='print-page' style='margin:.75in .25in 0in .2in'>" +
+            "<div style='background-color:#000'><div style='display:flex;flex-direction:row'><div style='flex:1 1 0px'>" +
+            "<div style='height:50px;padding:10px'><img src alt='Company Logo' style='float:left;height:100%;width:auto;color:#FAC81E'>" +
+            "</div></div><div style='flex:1 1 0px;padding-top:.2in;font-size:20px'><div style='color:#FAC81E;text-align:center'>On-Boarding Program</div>" +
+            "<div style='font-weight:700;color:#FAC81E;text-align:center'>Daily Event Page</div></div><div style='flex:1 1 0px'></div></div></div>" +
+            "<div class='print-body'><div style='font-size:20px;font-weight:700;text-align:center'>Saturday, June 22</div>" +
+            "<table class='book-ds' style='font-size:.13889in;font-weight:700;border:1px solid #000;border-collapse:collapse'><tbody>" +
+            "<tr><th style='border:1px solid #000;border-collapse:collapse'>Time</th><th style='border:1px solid #000;border-collapse:collapse'>Item</th>" +
+            "<th style='border:1px solid #000;border-collapse:collapse'>Res. Party</th><th style='border:1px solid #000;border-collapse:collapse;width:100%'>" +
+            "Description</th><th style='border:1px solid #000;border-collapse:collapse'>Done</th></tr><tr><td style='border:1px solid #000;border-collapse:collapse' id='08:00'>" +
+            "<div style='text-align:center'>08:00</div></td><td style='border:1px solid #000;border-collapse:collapse' id='item08:00'></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse' id='party08:00'></td><td style='border:1px solid #000;border-collapse:collapse;text-align:left' id='desc08:00'>" +
+            "</td><td style='border:1px solid #000;border-collapse:collapse' id='done08:00'></td></tr><tr>" +
+            "<td style='border:1px solid #000;border-collapse:collapse' id='08:30'><div style='text-align:center'>08:30</div></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse' id='item08:30'></td><td style='border:1px solid #000;border-collapse:collapse' id='party08:30'></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse;text-align:left' id='desc08:30'></td><td style='border:1px solid #000;border-collapse:collapse' id='done08:30'></td>" +
+            "</tr><tr><td style='border:1px solid #000;border-collapse:collapse' id='09:00'><div style='text-align:center'>09:00</div></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse' id='item09:00'></td><td style='border:1px solid #000;border-collapse:collapse' id='party09:00'></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse;text-align:left' id='desc09:00'></td><td style='border:1px solid #000;border-collapse:collapse' id='done09:00'>" +
+            "</td></tr><tr><td style='border:1px solid #000;border-collapse:collapse' id='09:30'><div style='text-align:center'>09:30</div></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse' id='item09:30'></td><td style='border:1px solid #000;border-collapse:collapse' id='party09:30'></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse;text-align:left' id='desc09:30'></td><td style='border:1px solid #000;border-collapse:collapse' id='done09:30'>" +
+            "</td></tr><tr><td style='border:1px solid #000;border-collapse:collapse' id='10:00'><div style='text-align:center'>10:00</div></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse' id='item10:00'></td><td style='border:1px solid #000;border-collapse:collapse' id='party10:00'></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse;text-align:left' id='desc10:00'></td><td style='border:1px solid #000;border-collapse:collapse' id='done10:00'>" +
+            "</td></tr><tr><td style='border:1px solid #000;border-collapse:collapse' id='10:30'><div style='text-align:center'>10:30</div></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse' id='item10:30'></td><td style='border:1px solid #000;border-collapse:collapse' id='party10:30'></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse;text-align:left' id='desc10:30'></td><td style='border:1px solid #000;border-collapse:collapse' id='done10:30'>" +
+            "</td></tr><tr><td style='border:1px solid #000;border-collapse:collapse' id='11:00'><div style='text-align:center'>11:00</div></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse' id='item11:00'><div style='text-align:center'></div></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse' id='party11:00'></td><td style='border:1px solid #000;border-collapse:collapse;text-align:left' id='desc11:00'>" +
+            "</td><td style='border:1px solid #000;border-collapse:collapse' id='done11:00'></td></tr><tr><td style='border:1px solid #000;border-collapse:collapse' id='11:30'>" +
+            "<div style='text-align:center'>11:30</div></td><td style='border:1px solid #000;border-collapse:collapse' id='item11:30'></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse' id='party11:30'></td><td style='border:1px solid #000;border-collapse:collapse;text-align:left' id='desc11:30'></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse' id='done11:30'></td></tr><tr><td style='border:1px solid #000;border-collapse:collapse' id='12:00'>" +
+            "<div style='text-align:center'>12:00</div></td><td style='border:1px solid #000;border-collapse:collapse' id='item12:00'></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse' id='party12:00'></td><td style='border:1px solid #000;border-collapse:collapse;text-align:left' id='desc12:00'>" +
+            "</td><td style='border:1px solid #000;border-collapse:collapse' id='done12:00'></td></tr><tr><td style='border:1px solid #000;border-collapse:collapse' id='12:30'>" +
+            "<div style='text-align:center'>12:30</div></td><td style='border:1px solid #000;border-collapse:collapse' id='item12:30'></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse' id='party12:30'></td><td style='border:1px solid #000;border-collapse:collapse;text-align:left' id='desc12:30'>" +
+            "</td><td style='border:1px solid #000;border-collapse:collapse' id='done12:30'></td></tr><tr><td style='border:1px solid #000;border-collapse:collapse' id='13:00'><div style='text-align:center'>" +
+            "13:00</div></td><td style='border:1px solid #000;border-collapse:collapse' id='item13:00'></td><td style='border:1px solid #000;border-collapse:collapse' id='party13:00'>" +
+            "</td><td style='border:1px solid #000;border-collapse:collapse;text-align:left' id='desc13:00'></td><td style='border:1px solid #000;border-collapse:collapse' id='done13:00'>" +
+            "</td></tr><tr><td style='border:1px solid #000;border-collapse:collapse' id='13:30'><div style='text-align:center'>13:30</div></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse' id='item13:30'></td><td style='border:1px solid #000;border-collapse:collapse' id='party13:30'></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse;text-align:left' id='desc13:30'></td><td style='border:1px solid #000;border-collapse:collapse' id='done13:30'></td></tr><tr>" +
+            "<td style='border:1px solid #000;border-collapse:collapse' id='14:00'><div style='text-align:center'>14:00</div></td><td style='border:1px solid #000;border-collapse:collapse' id='item14:00'>" +
+            "</td><td style='border:1px solid #000;border-collapse:collapse' id='party14:00'></td><td style='border:1px solid #000;border-collapse:collapse;text-align:left' id='desc14:00'></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse' id='done14:00'></td></tr><tr><td style='border:1px solid #000;border-collapse:collapse' id='14:30'><div style='text-align:center'>" +
+            "14:30</div></td><td style='border:1px solid #000;border-collapse:collapse' id='item14:30'></td><td style='border:1px solid #000;border-collapse:collapse' id='party14:30'></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse;text-align:left' id='desc14:30'></td><td style='border:1px solid #000;border-collapse:collapse' id='done14:30'></td></tr>" +
+            "<tr><td style='border:1px solid #000;border-collapse:collapse' id='15:00'><div style='text-align:center'>15:00</div></td><td style='border:1px solid #000;border-collapse:collapse' id='item15:00'>" +
+            "</td><td style='border:1px solid #000;border-collapse:collapse' id='party15:00'></td><td style='border:1px solid #000;border-collapse:collapse;text-align:left' id='desc15:00'></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse' id='done15:00'></td></tr><tr><td style='border:1px solid #000;border-collapse:collapse' id='15:30'><div style='text-align:center'>" +
+            "15:30</div></td><td style='border:1px solid #000;border-collapse:collapse' id='item15:30'></td><td style='border:1px solid #000;border-collapse:collapse' id='party15:30'></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse;text-align:left' id='desc15:30'></td><td style='border:1px solid #000;border-collapse:collapse' id='done15:30'></td></tr><tr>" +
+            "<td style='border:1px solid #000;border-collapse:collapse' id='16:00'><div style='text-align:center'>16:00</div></td><td style='border:1px solid #000;border-collapse:collapse' id='item16:00'>" +
+            "</td><td style='border:1px solid #000;border-collapse:collapse' id='party16:00'></td><td style='border:1px solid #000;border-collapse:collapse;text-align:left' id='desc16:00'></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse' id='done16:00'></td></tr><tr><td style='border:1px solid #000;border-collapse:collapse' id='16:30'><div style='text-align:center'>" +
+            "16:30</div></td><td style='border:1px solid #000;border-collapse:collapse' id='item16:30'></td><td style='border:1px solid #000;border-collapse:collapse' id='party16:30'></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse;text-align:left' id='desc16:30'></td><td style='border:1px solid #000;border-collapse:collapse' id='done16:30'></td></tr>" +
+            "<tr><td style='border:1px solid #000;border-collapse:collapse' id='17:00'><div style='text-align:center'>17:00</div></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse' id='item17:00'></td><td style='border:1px solid #000;border-collapse:collapse' id='party17:00'></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse;text-align:left' id='desc17:00'></td><td style='border:1px solid #000;border-collapse:collapse' id='done17:00'>" +
+            "</td></tr><tr><td style='border:1px solid #000;border-collapse:collapse' id='17:30'><div style='text-align:center'>17:30</div></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse' id='item17:30'></td><td style='border:1px solid #000;border-collapse:collapse' id='party17:30'>" +
+            "</td><td style='border:1px solid #000;border-collapse:collapse;text-align:left' id='desc17:30'></td><td style='border:1px solid #000;border-collapse:collapse' id='done17:30'>" +
+            "</td></tr><tr><td style='border:1px solid #000;border-collapse:collapse' id='18:00'><div style='text-align:center'>18:00</div></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse' id='item18:00'></td><td style='border:1px solid #000;border-collapse:collapse' id='party18:00'>" +
+            "</td><td style='border:1px solid #000;border-collapse:collapse;text-align:left' id='desc18:00'></td><td style='border:1px solid #000;border-collapse:collapse' id='done18:00'>" +
+            "</td></tr><tr><td style='border:1px solid #000;border-collapse:collapse' id='18:30'><div style='text-align:center'>18:30</div></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse' id='item18:30'></td><td style='border:1px solid #000;border-collapse:collapse'" +
+            " id='party18:30'></td><td style='border:1px solid #000;border-collapse:collapse;text-align:left' id='desc18:30'></td><td style='border:1px solid #000;border-collapse:collapse' id='done18:30'>" +
+            "</td></tr><tr><td style='border:1px solid #000;border-collapse:collapse' id='19:00'><div style='text-align:center'>19:00</div></td>" +
+            "<td style='border:1px solid #000;border-collapse:collapse' id='item19:00'></td><td style='border:1px solid #000;border-collapse:collapse' id='party19:00'>" +
+            "</td><td style='border:1px solid #000;border-collapse:collapse;text-align:left' id='desc19:00'></td><td style='border:1px solid #000;border-collapse:collapse' id='done19:00'>" +
+            "</td></tr></tbody></table></div><div><div style='display:flex;flex-direction:row'><div style='flex:1 1 0px'>Andy McNulty</div><div style='flex:1 1 0px;padding-top:.2in;font-size:20px'>" +
+            "</div><div style='flex:1 1 0px'>Commumication Performance Management Associates</div></div><div style='display:flex;flex-direction:row;background-color:#000'><div style='flex:1 1 0px'>Andy McNulty</div>" +
+            "<div style='flex:1 1 0px;padding-top:.2in;font-size:20px'></div><div style='flex:1 1 0px;text-align:right'>Commumication Performance Management Associates</div></div></div></div></div>";
+    }
+
+    void SaveSchedule()
+    {
+        if (String.IsNullOrWhiteSpace(filename))
+        {
+            errorMessage = "Must choose a filename";
+            return;
+        }
+        if (curCompany == -1)
+        {
+            errorMessage = "Must choose a company";
+            return;
+        }
+        errorMessage = "";
+        successMessage = "";
+        try
+        {
+            using (MemoryStream ms = new MemoryStream())
+            {
+                HtmlToPdf converter = new HtmlToPdf();
+                converter.Options.PdfPageOrientation = PdfPageOrientation.Landscape;
+                PdfDocument doc = converter.ConvertHtmlString(scheduletemplate);
+                doc.Save(ms);
+                string fileBase64Data = Convert.ToBase64String(ms.ToArray());
+                string command = $"INSERT INTO pages (company_id, custom_page, [name], [file]) VALUES({curCompany}, '{false}', '{filename}', CONVERT(VARBINARY(MAX), '{fileBase64Data}'))";
+                Functions.GetDataTableFromSQL(command);
+                doc.Close();
+            }
+            successMessage = "Successfully uploaded schedule";
+        }
+        catch { errorMessage = "Failed to save schedule"; }
+    }
+
+    public async void CompanyChanged(ChangeEventArgs e)
+    {
+        curCompany = Int32.Parse(e.Value.ToString());
+        ((CustomAuthenticationStateProvider)authenticationStateProvider).setCompanyId(curCompany);
+        StateHasChanged();
+    }
 }
