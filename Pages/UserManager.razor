@@ -6,36 +6,80 @@
 @inject AuthenticationStateProvider authenticationStateProvider
 @inject Blazored.SessionStorage.ISessionStorageService sessionStorage
 @attribute [Authorize(Roles = "Owner, Manager")]
-<div style="display: flex; flex-direction: row;">
-    <div style="flex: 1 1 0px;">
-        <h3>User Manager</h3>
-    </div>
-    <div style="flex: 1 1 0px;">
-        @if (curRole == 0)
-        {
-            <div style="align-content:center;text-align:center;margin:auto;">
-                <h4 style="display:inline;"> Current Company: </h4>
-                <select @onchange="CompanyChanged" style="display: inline-block; margin: auto;">
-                    <option value="-1"></option>
-                    @foreach (DataRow dr in companies_dt.Rows)
+
+<link href="css/main.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+    body {
+        text-align: left;
+    }
+
+    #filters {
+        width: calc(100% - 42px);
+        background-color: #f7f7f7;
+        border: 1px solid #bbb;
+        padding: 20px;
+    }
+
+    #editor {
+        background-color: #fff;
+    }
+
+    #event_container {
+        height: 244px;
+        width: 200px;
+        overflow-y: scroll;
+        margin-top: 10px;
+        border: 1px solid #bbb;
+        background-color: #fff;
+    }
+
+    .ui-autocomplete {
+        text-align: left;
+    }
+
+    #main_section {
+        width: calc(100% - 244px);
+    }
+
+    #body_wrapper table {
+        border-collapse: collapse;
+    }
+
+    #body_wrapper td {
+        padding: 0;
+    }
+</style>
+
+<h3>User Manager</h3>
+<div ID="upResults" runat="server">
+    <div ID="lblResults" Class="result-box">@(message)</div>
+
+    @if (curRole == 0)
+    {
+        <div ID="pnlGlobal" runat="server" Visible="false">
+            <div style="font-size: 20px; margin: 0 10px 0 0; padding-top: 10px; float: left;">Change company:</div>
+            <select id="lbCompanies" @onchange="@CompanyChanged">
+                @foreach (DataRow dr in companies_dt.Rows)
+                {
+                    if (curCompany == (int)dr["id"])
                     {
-                        if (curCompany == (int)dr[0])
-                        {
-                            <option value="@dr[0].ToString()" selected>@dr[1].ToString()</option>
-                        }
-                        else
-                        {
-                            <option value="@dr[0].ToString()">@dr[1].ToString()</option>
-                        }
+                        <option value="@(dr["id"].ToString())" selected>@(dr["name"].ToString())</option>
                     }
-                </select>
-            </div>
-        }
-    </div>
-    <div style="flex: 1 1 0px;">
-        <button style="float: right; margin-left: auto;" class="btn btn-primary" @onclick="UserAddedButtonToggle">Add Users</button>
-    </div>
+                    else
+                    {
+                        <option value="@(dr["id"].ToString())">@(dr["name"].ToString())</option>
+                    }
+                }
+            </select>
+            <div style="float: right; color: #888; padding: 25px 0 0 0;">Global Admin Only</div>
+        </div>
+    }
 </div>
+
+<div style="align-content:center;text-align:center;margin:auto;">
+    <button class="btn btn-primary" @onclick="UserAddedButtonToggle">Add Users</button>
+</div>
+
 <br />
 <br />
 @if (errorMessage != "")
@@ -145,6 +189,7 @@
     private AddUser user = new AddUser();
     private string errorMessage = "";
     private string successMessage = "";
+    public string message = "Welcome to the user manager!";
     private DataTable dt;
     private DataTable companies_dt;
     private DataTable companies_dt_joined;
@@ -171,6 +216,7 @@
     protected override async Task OnInitializedAsync()
     {
         curCompany = ((CustomAuthenticationStateProvider)authenticationStateProvider).getCompanyId();
+        curCompany = (curCompany == -1) ? 1 : curCompany;
         curRole = ((CustomAuthenticationStateProvider)authenticationStateProvider).getRoleId();
         curUserId = ((CustomAuthenticationStateProvider)authenticationStateProvider).getUserId();
         if (curRole == 0)
@@ -282,7 +328,7 @@
         else
         {
             Functions.GetDataTableFromSQL($"UPDATE users SET user_name = '{editedName}',role_id = '{editedRoleID}',email = '{editedEmail}' WHERE id = '{UserID}'");
-     
+
         }
 
         if (curRole == 0)
