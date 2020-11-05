@@ -164,6 +164,7 @@
             };
             xhttp.open("GET", actionpath + "&compId=" + val, true);
             xhttp.send();
+            companyIdStr = val;
         }
 
         function showMessage(elementId) {
@@ -193,6 +194,7 @@
                     else {
                         showMessage("successMessage");
                         quill.setContents([{ insert: '\n' }]);
+                        document.getElementById("filename").value = "";
                     }
                 }
             };
@@ -228,7 +230,7 @@
                     requestHelper(html, filename);
                 }
                 catch{
-                    uploadingMessage("errorMessage")
+                    showMessage("errorMessage")
                 }
             }
         }

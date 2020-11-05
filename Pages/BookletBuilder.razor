@@ -44,7 +44,7 @@
 @if (curRole == 0)
 {
     <div style="margin:auto;text-align:center;">
-        <InputFile OnChange="@OnInputFileChange" multiple accept="application/pdf"/>
+        <InputFile OnChange="@OnInputFileChange" multiple accept="application/pdf" />
         <button @onclick="SavePage" class="btn btn-primary">Upload Page</button>
     </div>
     <table style="margin: auto">
@@ -73,19 +73,23 @@
         }
     </table>
     <br />
+    <div style="justify-content: center; align-items: center; text-align: center; width:auto; margin:auto;">
+        @if (@errorMessage != "")
+        {
+            <div id="errorMessage" class="alert alert-danger" style="display:inline-block; margin:auto; text-align: center;">@errorMessage</div>
+            <br />
+            <br />
+        }
+        @if (@successMessage != "")
+        {
+            <div id="successMessage" class="alert alert-success" style="display:inline-block; margin: auto; text-align: center;">@successMessage</div>
+            <br />
+            <br />
+        }
+    </div>
     @if (booklet.numPages() > 0)
     {
         <div style="justify-content: center; align-items: center; text-align: center; width:auto; margin:auto;">
-            @if (@errorMessage != "")
-            {
-                <div id="errorMessage" class="alert alert-danger" style="display:inline-block; margin:auto; text-align: center;">@errorMessage</div>
-                <br /><br />
-            }
-            @if (@successMessage != "")
-            {
-                <div id="successMessage" class="alert alert-success" style="display:inline-block; margin: auto; text-align: center;">@successMessage</div>
-                <br /><br />
-            }
             <h4 style="display:inline-block;align-content:center; margin-left:auto;"> Employee: </h4>
             <select @bind=booklet.employeeStr style="display: inline-block; margin-right:auto; height: 27px;">
                 <option value="-1" selected>Not Assigned</option>
@@ -108,7 +112,7 @@
                     {
                         <li oncontextmenu="return false;" draggable="true" class="list-group-item" style="list-style-type:none;" @key="item.ID" tabindex="1"
                             @ondrop="@(()=> Drop(item))" @ondrag="@(()=> StartDrag(item))" @onmouseup="@((e)=> RemovePage(e, item))">
-                            <span>@item.Name</span> <span>@item.Company_ID</span>
+                            <span>@item.Name</span>
                         </li>
                     }
                 }
@@ -140,12 +144,12 @@
         {
             companies_dt = Functions.GetDataTableFromSQL("SELECT [id], [name] FROM [companies]");
             dt = Functions.GetDataTableFromSQL("SELECT p.[id], p.[company_id], p.[custom_page], p.[name], p.[file], c.[name] FROM [pages] p left join [companies] c on p.company_id=c.id");
-            users_dt = Functions.GetDataTableFromSQL("SELECT [id], [user_name], [company_id] FROM [users] WHERE [role_id]=2");
+            users_dt = Functions.GetDataTableFromSQL("SELECT [id], [user_name], [company_id] FROM [users] WHERE [role_id]=2 and [active]=1");
         }
         else
         {
             dt = Functions.GetDataTableFromSQL("SELECT [id], [company_id], [custom_page], [name], [file] FROM [pages] WHERE [company_id]=" + curCompany.ToString());
-            users_dt = Functions.GetDataTableFromSQL("SELECT [id], [user_name], [company_id] FROM [users] WHERE [role_id]=2 and [company_id]=" + curCompany.ToString());
+            users_dt = Functions.GetDataTableFromSQL("SELECT [id], [user_name], [company_id] FROM [users] WHERE [role_id]=2 and [active]=1 and [company_id]=" + curCompany.ToString());
         }
         AllPages = new List<Page>();
         foreach (DataRow dr in dt.Rows)
@@ -282,6 +286,7 @@
                 Functions.GetDataTableFromSQL($"INSERT INTO userToBooklet ([user_id], [booklet_id]) VALUES({employeeId}, {insertedId})");
             }
             errorMessage = "";
+            booklet.reset();
         }
         else
         {
@@ -371,6 +376,12 @@
         public int getIndex(Page item)
         {
             return bookletPages.FindIndex(a => a.ID == item.ID);
+        }
+        public void reset()
+        {
+            filename = "";
+            employeeStr = "-1";
+            bookletPages.Clear();
         }
     }
 
