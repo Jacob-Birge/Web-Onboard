@@ -26,9 +26,13 @@
     <link href="https://cdn.quilljs.com/1.1.3/quill.snow.css" rel="stylesheet" />
     <link href="https://cdn.quilljs.com/1.1.3/quill.bubble.css" rel="stylesheet" />
 
-    <style>
+    <link href="css/main.css" rel="stylesheet" type="text/css" />
+    <style type="text/css">
         .error {
             border: 2px solid red;
+        }
+        body {
+            text-align: left;
         }
     </style>
 </head>
@@ -47,22 +51,17 @@
                 </div>
             </div>
             <div class="content px-4">
-                <div style="display: flex; flex-direction: row;">
-                    <div style="flex: 1 1 0px;">
-                        <h3 style="display:inline"> Custom Page Builder </h3>
-                    </div>
-                    <div style="flex: 1 1 0px;">
-                        @if (Model.roleId == 0)
-                        {
-                            <div style="align-content:center;text-align:center">
-                                <h4 style="display:inline"> Current Company: </h4>
-                                @Html.DropDownList("companySelection", Model.companyListItems, new { @onchange = "changeCompany(this.value)", @style = "display:inline-block; margin:auto;" })
-                            </div>
-                            <br />
-                        }
-                    </div>
-                    <div style="flex: 1 1 0px;">
-                    </div>
+                <h3>Custom Page Builder</h3>
+                <div ID="upResults" runat="server">
+                    <div ID="lblResults" Class="result-box">@(Model.message)</div>
+                    @if (Model.roleId == 0)
+                    {
+                <div ID="pnlGlobal" runat="server" Visible="false">
+                    <div style="font-size: 20px; margin: 0 10px 0 0; padding-top: 10px; float: left;">Change company:</div>
+                    @Html.DropDownList("companySelection", Model.companyListItems, new { @id="lbCompanies", @onchange = "changeCompany(this.value)", @style = "display:inline-block; margin:auto;" })
+                    <div style="float: right; color: #888; padding: 25px 0 0 0;">Global Admin Only</div>
+                </div>
+                    }
                 </div>
 
                 <div id="errorMessage" class="alert alert-danger" style="display:none">

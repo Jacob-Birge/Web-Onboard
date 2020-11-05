@@ -15,6 +15,7 @@ namespace Web_Onboard.Pages
         public int companyId { get; set; }
         public int roleId { get; set; }
         public string name { get; set; }
+        public string message { get; set; }
         public List<SelectListItem> companyListItems { get; set; }
 
         public CustomPageBuilderModel(AuthenticationStateProvider authStateProvider)
@@ -48,13 +49,15 @@ namespace Web_Onboard.Pages
         }
         private void CommonInit()
         {
+            message = "Welcome to the custom page builder!";
             roleId = _authStateProvider.getRoleId();
             if (roleId == 0)
             {
                 companyListItems = new List<SelectListItem>();
                 companyListItems.Add(new SelectListItem
                 {
-                    Text = "",
+                    Selected = (companyId == -1),
+                    Text = "Not Selected",
                     Value = "-1"
                 });
                 DataTable dt = Functions.GetDataTableFromSQL("SELECT [id], [name] FROM [companies]");

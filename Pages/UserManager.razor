@@ -8,50 +8,15 @@
 @attribute [Authorize(Roles = "Owner, Manager")]
 
 <link href="css/main.css" rel="stylesheet" type="text/css" />
+
 <style type="text/css">
     body {
         text-align: left;
     }
-
-    #filters {
-        width: calc(100% - 42px);
-        background-color: #f7f7f7;
-        border: 1px solid #bbb;
-        padding: 20px;
-    }
-
-    #editor {
-        background-color: #fff;
-    }
-
-    #event_container {
-        height: 244px;
-        width: 200px;
-        overflow-y: scroll;
-        margin-top: 10px;
-        border: 1px solid #bbb;
-        background-color: #fff;
-    }
-
-    .ui-autocomplete {
-        text-align: left;
-    }
-
-    #main_section {
-        width: calc(100% - 244px);
-    }
-
-    #body_wrapper table {
-        border-collapse: collapse;
-    }
-
-    #body_wrapper td {
-        padding: 0;
-    }
 </style>
 
 <h3>User Manager</h3>
-<div ID="upResults" runat="server">
+<div ID="upResults">
     <div ID="lblResults" Class="result-box">@(message)</div>
 
     @if (curRole == 0)
@@ -59,6 +24,7 @@
         <div ID="pnlGlobal" runat="server" Visible="false">
             <div style="font-size: 20px; margin: 0 10px 0 0; padding-top: 10px; float: left;">Change company:</div>
             <select id="lbCompanies" @onchange="@CompanyChanged">
+                <option value="-1">Not Selected</option>
                 @foreach (DataRow dr in companies_dt.Rows)
                 {
                     if (curCompany == (int)dr["id"])
@@ -139,7 +105,7 @@
                         <span style="font-size: 200%; margin-left: 25px; margin-top: 15px; color: #667; width:300px;">@(dr["user_name"].ToString())</span>
                         @if (curRole == 0 && curCompany == -1)
                         {
-                            <span style="font-size: 200%; margin-left: 25px; margin-top: 15px; color: #667">@dr["name"]</span>
+                            <span style="font-size: 200%; margin-left: 25px; margin-top: 15px; color: #667">@((String.IsNullOrWhiteSpace(dr["name"].ToString())) ? "CPMA" : dr["name"])</span>
                         }
                         <button style="height: 50px; width: 50px; border-radius: 50%; background-color: #667; margin: auto 10px auto auto;" @onclick="(e => UserClicked(dr))">
                             <img src="Images/edit.png" style="height:25px; position: relative; width:25px" />
@@ -209,20 +175,19 @@
     private string editedName = "";
     private string editedEmail = "";
     private int editedRoleID = 999;
-    private bool userSelect_view = false;
     private string roleName = "";
 
 
     protected override async Task OnInitializedAsync()
     {
         curCompany = ((CustomAuthenticationStateProvider)authenticationStateProvider).getCompanyId();
-        curCompany = (curCompany == -1) ? 1 : curCompany;
         curRole = ((CustomAuthenticationStateProvider)authenticationStateProvider).getRoleId();
         curUserId = ((CustomAuthenticationStateProvider)authenticationStateProvider).getUserId();
         if (curRole == 0)
         {
             companies_dt = Functions.GetDataTableFromSQL("SELECT [id], [name] FROM [companies]");
             dt = Functions.GetDataTableFromSQL("SELECT u.[id], u.[user_name], u.[role_id], u.[company_id], u.[email], c.[name] FROM [users] u left join [companies] c on u.company_id=c.id where u.[active]=1");
+            //curCompany = (curCompany == -1) ? (int)companies_dt.Rows[0][0] : curCompany;
         }
         else
         {
@@ -265,6 +230,9 @@
             }
             addButtonClicked = false;
             user.email = "";
+            user.password = "";
+            user.firstname = "";
+            user.lastname = "";
             user.role_id = "2";
             user.username = "";
 

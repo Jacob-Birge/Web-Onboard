@@ -9,35 +9,39 @@
 @inject AuthenticationStateProvider authenticationStateProvider
 @inject IJSRuntime JSRuntime;
 
+<link href="css/main.css" rel="stylesheet" type="text/css" />
 
-<div style="display: flex; flex-direction: row;">
-    <div style="flex: 1 1 0px;">
-        <h3>Booklet Builder</h3>
-    </div>
-    <div style="flex: 1 1 0px;">
-        @if (curRole == 0)
-        {
-            <div style="justify-content:center;align-items:center;text-align:center">
-                <h4 style="display:inline-block;align-content:center; margin-left:auto;"> Current Company: </h4>
-                <select @onchange="CompanyChanged" style="display: inline-block; margin-right:auto;">
-                    <option value="-1"></option>
-                    @foreach (DataRow dr in companies_dt.Rows)
+<style type="text/css">
+    body {
+        text-align: left;
+    }
+</style>
+
+<h3>Booklet Builder</h3>
+<div ID="upResults">
+    <div ID="lblResults" Class="result-box">@(message)</div>
+
+    @if (curRole == 0)
+    {
+        <div ID="pnlGlobal" runat="server" Visible="false">
+            <div style="font-size: 20px; margin: 0 10px 0 0; padding-top: 10px; float: left;">Change company:</div>
+            <select id="lbCompanies" @onchange="@CompanyChanged">
+                <option value="-1">Not Selected</option>
+                @foreach (DataRow dr in companies_dt.Rows)
+                {
+                    if (curCompany == (int)dr["id"])
                     {
-                        if (curCompany == (int)dr[0])
-                        {
-                            <option value="@dr[0].ToString()" selected>@dr[1].ToString()</option>
-                        }
-                        else
-                        {
-                            <option value="@dr[0].ToString()">@dr[1].ToString()</option>
-                        }
+                        <option value="@(dr["id"].ToString())" selected>@(dr["name"].ToString())</option>
                     }
-                </select>
-            </div>
-        }
-    </div>
-    <div style="flex: 1 1 0px;">
-    </div>
+                    else
+                    {
+                        <option value="@(dr["id"].ToString())">@(dr["name"].ToString())</option>
+                    }
+                }
+            </select>
+            <div style="float: right; color: #888; padding: 25px 0 0 0;">Global Admin Only</div>
+        </div>
+    }
 </div>
 
 
@@ -131,6 +135,7 @@
     string errorMessage = "";
     string successMessage = "";
     IFileListEntry[] files = null;
+    public string message = "Welcome to the booklet builder!";
 
     List<Page> AllPages;
 
