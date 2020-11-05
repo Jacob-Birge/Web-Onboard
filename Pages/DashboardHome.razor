@@ -1,5 +1,7 @@
 ﻿@page "/dashboard"
 @attribute [Authorize]
+@using Web_Onboard.Data
+@using System.Data
 @inject NavigationManager navigationManager
 @inject AuthenticationStateProvider authenticationStateProvider
 
@@ -21,17 +23,47 @@
 </AuthorizeView>
 <AuthorizeView Roles="BaseUser">
     <Authorized>
-        <p>Hello (New Hire)</p>
+        <div style="text-align:center;">
+            @if (String.IsNullOrWhiteSpace(firstname))
+            {
+                <h1>Welcome Aboard!</h1>
+            }
+            else
+            {
+                <h1>Welcome Aboard, @firstname!</h1>
+            }
+            <br />
+            @if (dt.Rows.Count > 0)
+            {
+
+            }
+            else
+            {
+                <h3>You do not currently have a booklet assigned to you.</h3>
+            }
+        </div>
     </Authorized>
 </AuthorizeView>
 
 @code{
+    private string firstname = "";
+    private int curRole = -1;
+    private int curUserId = -1;
+    DataTable dt = new DataTable();
+
     protected override async Task OnInitializedAsync()
     {
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         if (!authState.User.Identity.IsAuthenticated)
         {
             navigationManager.NavigateTo("/login");
+        }
+        curRole = ((CustomAuthenticationStateProvider)authenticationStateProvider).getRoleId();
+        firstname = ((CustomAuthenticationStateProvider)authenticationStateProvider).getFirstName();
+        curUserId = ((CustomAuthenticationStateProvider)authenticationStateProvider).getUserId();
+        if (curRole == 2)
+        {
+            dt = Functions.GetDataTableFromSQL($"select b.[name], b.[file] from [booklets] b join [userToBooklet] ub on b.[id]=ub.[booklet_id] join [users] u on ub.[user_id]=u.[id] where u.[id]={curUserId}");
         }
     }
 }

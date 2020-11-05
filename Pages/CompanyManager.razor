@@ -42,7 +42,7 @@
                 <span>Name</span>
                 <input style="width: 200px" @bind="addedName" type="text" />
             </div>
-            <InputFile style="color: transparent;" OnChange="ImagePathHandlerAdded" />
+            <InputFile style="color: transparent;" OnChange="ImagePathHandlerAdded" accept="image/x-png,image/jpeg" />
             <div>
                 <button style="margin-top: 20px" class="btn btn-success" @onclick="CompanyAddedComplete">Add Company</button>
             </div>
@@ -102,7 +102,7 @@
                     </div>
                     <div style="margin-top: 15px; display: flex; flex-direction: column;">
                         <span style="margin-right: 20px">Change Image</span>
-                        <InputFile style="color: transparent;" OnChange="ImagePathHandlerEdited" />
+                        <InputFile style="color: transparent;" OnChange="ImagePathHandlerEdited" accept="image/x-png,image/jpeg" />
                     </div>
                 </div>
 

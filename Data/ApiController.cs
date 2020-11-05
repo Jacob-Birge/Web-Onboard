@@ -12,7 +12,7 @@ using SelectPdf;
 namespace Web_Onboard.Data
 {
     [ApiController]
-    public class SaveFileController : Controller
+    public class ApiController : Controller
     {
         private static string fullHtml = "";
 
@@ -54,6 +54,32 @@ namespace Web_Onboard.Data
                 Functions.GetDataTableFromSQL(command);
                 doc.Close();
             }
+        }
+
+        [Route("api/downloadfile")]
+        [HttpGet]
+        public IActionResult downloadFile(int table, int fileId)
+        {
+            DataTable dt = new DataTable();
+            //save from booklets table
+            if (table == 0)
+            {
+                dt = Functions.GetDataTableFromSQL($"SELECT [name], [file] FROM [booklets] where id={fileId}");
+            }
+            //save from pages table
+            else if (table == 1)
+            {
+                dt = Functions.GetDataTableFromSQL($"SELECT [name], [file] FROM [pages] where id={fileId}");
+            }
+            if (dt.Rows.Count > 0 && dt.Rows[0][1] != DBNull.Value)
+            {
+                string base64str = System.Text.Encoding.ASCII.GetString((byte[])dt.Rows[0][1]);
+                byte[] byteArr = Convert.FromBase64String(base64str);
+                Stream s = new MemoryStream(byteArr);
+                string filename = dt.Rows[0][0].ToString() + ".pdf";
+                return File(s, "application/octet-stream", filename);
+            }
+            return null;
         }
     }
 }
