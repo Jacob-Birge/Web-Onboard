@@ -3,9 +3,11 @@
 @using System.Data
 @using PdfSharpCore.Pdf;
 @using PdfSharpCore.Pdf.IO;
+@using System.ComponentModel.DataAnnotations
+@using BlazorInputFile
 @attribute [Authorize(Roles = "Owner")]
 @inject AuthenticationStateProvider authenticationStateProvider
-@inject Blazored.SessionStorage.ISessionStorageService sessionStorage
+@inject IJSRuntime JSRuntime;
 
 
 <div style="display: flex; flex-direction: row;">
@@ -41,10 +43,14 @@
 
 @if (curRole == 0)
 {
+    <div style="margin:auto;text-align:center;">
+        <InputFile OnChange="@OnInputFileChange" multiple accept="application/pdf" />
+        <button @onclick="SavePage" class="btn btn-primary">Upload Page</button>
+    </div>
     <table style="margin: auto">
         <tr>
             <th>File Name</th>
-            @if (curRole == 0)
+            @if (curRole == 0 && curCompany == -1)
             {
                 <th>Company</th>
             }
@@ -57,23 +63,36 @@
                 //Users Table
                 <tr>
                     <td>@item.Name</td>
-                    @if (curRole == 0)
+                    @if (curRole == 0 && curCompany == -1)
                     {
                         <td>@item.Company_Name</td>
                     }
-                    <td><button class="btn btn-success" @onclick="@(e => AddPage(item.ID))">Add</button></td>
-                    @*<button class="btn btn-success" @onclick="UserDelete">Delete</button>*@
+                    <td><button class="btn btn-dark" @onclick="@(e => AddPage(item.ID))">Add</button></td>
                 </tr>
             }
         }
     </table>
     <br />
-    @if (BookletPages.Count > 0)
+    <div style="justify-content: center; align-items: center; text-align: center; width:auto; margin:auto;">
+        @if (@errorMessage != "")
+        {
+            <div id="errorMessage" class="alert alert-danger" style="display:inline-block; margin:auto; text-align: center;">@errorMessage</div>
+            <br />
+            <br />
+        }
+        @if (@successMessage != "")
+        {
+            <div id="successMessage" class="alert alert-success" style="display:inline-block; margin: auto; text-align: center;">@successMessage</div>
+            <br />
+            <br />
+        }
+    </div>
+    @if (booklet.numPages() > 0)
     {
         <div style="justify-content: center; align-items: center; text-align: center; width:auto; margin:auto;">
             <h4 style="display:inline-block;align-content:center; margin-left:auto;"> Employee: </h4>
-            <select @onchange="UserChanged" style="display: inline-block; margin-right:auto;">
-                <option value="-1" selected></option>
+            <select @bind=booklet.employeeStr style="display: inline-block; margin-right:auto; height: 27px;">
+                <option value="-1" selected>Not Assigned</option>
                 @foreach (DataRow dr in users_dt.Rows)
                 {
                     if (curCompany == -1 || curCompany == (int)dr[2])
@@ -82,15 +101,18 @@
                     }
                 }
             </select>
-            <button @onclick="SaveBooklet">Save Booklet</button>
-            <ul ondragover="event.preventDefault();" class="list-group list-group-horizontal" style="margin: auto">
-                @foreach (Page item in BookletPages)
+            <input type="text" placeholder="File Name" @bind=booklet.filename autocomplete="off" style="display: inline; text-align: center; width: 200px; height: 27px; padding: 0px 5px 0px 0px;" />
+            <button @onclick="SaveBooklet" class="btn btn-primary">Upload Booklet</button>
+            <button @onclick="DownloadBooklet" class="btn btn-primary">Download</button>
+            <br /><br />
+            <ul ondragover="event.preventDefault();" class="list-group list-group-horizontal justify-content-center" style="margin: auto;">
+                @foreach (Page item in booklet.bookletPages)
                 {
                     @if (item != null && (curCompany == -1 || curCompany == item.Company_ID))
                     {
                         <li oncontextmenu="return false;" draggable="true" class="list-group-item" style="list-style-type:none;" @key="item.ID" tabindex="1"
                             @ondrop="@(()=> Drop(item))" @ondrag="@(()=> StartDrag(item))" @onmouseup="@((e)=> RemovePage(e, item))">
-                            <span>@item.Name</span> <span>@item.Company_ID</span>
+                            <span>@item.Name</span>
                         </li>
                     }
                 }
@@ -105,34 +127,29 @@
     DataTable companies_dt;
     DataTable users_dt;
     int curCompany = -1;
-    int curUser = -1;
     int curRole = -1;
+    string errorMessage = "";
+    string successMessage = "";
+    IFileListEntry[] files = null;
 
     List<Page> AllPages;
-    List<Page> BookletPages;
+
+    Booklet booklet = new Booklet();
 
     protected override async Task OnInitializedAsync()
     {
-        int? tempComp = await sessionStorage.GetItemAsync<int>("companyId");
-        if (tempComp.HasValue)
-        {
-            curCompany = tempComp.Value;
-        }
-        int? tempRole = await sessionStorage.GetItemAsync<int>("roleId");
-        if (tempRole.HasValue)
-        {
-            curRole = tempRole.Value;
-        }
+        curCompany = ((CustomAuthenticationStateProvider)authenticationStateProvider).getCompanyId();
+        curRole = ((CustomAuthenticationStateProvider)authenticationStateProvider).getRoleId();
         if (curRole == 0)
         {
             companies_dt = Functions.GetDataTableFromSQL("SELECT [id], [name] FROM [companies]");
             dt = Functions.GetDataTableFromSQL("SELECT p.[id], p.[company_id], p.[custom_page], p.[name], p.[file], c.[name] FROM [pages] p left join [companies] c on p.company_id=c.id");
-            users_dt = Functions.GetDataTableFromSQL("SELECT [id], [user_name], [company_id] FROM [users] WHERE [role_id]=2");
+            users_dt = Functions.GetDataTableFromSQL("SELECT [id], [user_name], [company_id] FROM [users] WHERE [role_id]=2 and [active]=1");
         }
         else
         {
             dt = Functions.GetDataTableFromSQL("SELECT [id], [company_id], [custom_page], [name], [file] FROM [pages] WHERE [company_id]=" + curCompany.ToString());
-            users_dt = Functions.GetDataTableFromSQL("SELECT [id], [user_name], [company_id] FROM [users] WHERE [role_id]=2 and [company_id]=" + curCompany.ToString());
+            users_dt = Functions.GetDataTableFromSQL("SELECT [id], [user_name], [company_id] FROM [users] WHERE [role_id]=2 and [active]=1 and [company_id]=" + curCompany.ToString());
         }
         AllPages = new List<Page>();
         foreach (DataRow dr in dt.Rows)
@@ -150,7 +167,7 @@
                 AllPages.Add(new Page() { ID = ";" + dr[0].ToString() + ";", Company_ID = compID, Company_Name = compName, Custom = (bool)dr[2], Name = dr[3].ToString(), Doc = doc });
             }
         }
-        BookletPages = new List<Page>();
+        booklet = new Booklet();
         StateHasChanged();
     }
 
@@ -161,38 +178,28 @@
         StateHasChanged();
     }
 
-    public void UserChanged(ChangeEventArgs e)
-    {
-        curUser = Int32.Parse(e.Value.ToString());
-    }
-
     int currentIndex;
 
     void StartDrag(Page item)
     {
-        currentIndex = GetIndex(item);
+        currentIndex = booklet.getIndex(item);
     }
 
     void ClickItem(Page item)
     {
-        currentIndex = GetIndex(item);
-    }
-
-    int GetIndex(Page item)
-    {
-        return BookletPages.FindIndex(a => a.ID == item.ID);
+        currentIndex = booklet.getIndex(item);
     }
 
     void Drop(Page item)
     {
         if (item != null)
         {
-            var index = GetIndex(item);
+            var index = booklet.getIndex(item);
             // get current item
-            var current = BookletPages[currentIndex];
+            var current = booklet[currentIndex];
             // remove game from current index
-            BookletPages.RemoveAt(currentIndex);
-            BookletPages.Insert(index, current);
+            booklet.removeAt(currentIndex);
+            booklet.insert(index, current);
 
             // update current selection
             currentIndex = index;
@@ -206,14 +213,13 @@
         int index = AllPages.FindIndex(a => a.ID == ID);
         if (index != -1)
         {
-            int numberOfExistingCopies = BookletPages.Count(a => a.ID.Contains(ID));
+            int numberOfExistingCopies = booklet.count(ID);
             string newID = ID;
             for (int i = 0; i < numberOfExistingCopies; i++)
             {
                 newID += ID.Substring(1);
             }
-            BookletPages.Add(AllPages[index].Copy());
-            BookletPages[BookletPages.Count - 1].ID = newID;
+            booklet.add(AllPages[index].Copy(newID));
             StateHasChanged();
         }
     }
@@ -222,30 +228,161 @@
     {
         if (e.Button == 2 && item != null)
         {
-            int index = GetIndex(item);
-            BookletPages.RemoveAt(index);
+            int index = booklet.getIndex(item);
+            booklet.removeAt(index);
             StateHasChanged();
         }
     }
 
     void SaveBooklet()
     {
-        if (BookletPages.Count > 0)
+        if (SaveHelper() != -1)
         {
-            PdfDocument booklet = new PdfDocument();
-            for (int i=0; i<BookletPages.Count; i++)
-            {
-                for (int j = 0; j < BookletPages[i].Doc.PageCount; j++)
-                {
-                    booklet.AddPage(BookletPages[i].Doc.Pages[j]);
-                }
-            }
-            booklet.Save("booklet.pdf");
+            successMessage = "Successfully uploaded booklet";
         }
     }
 
-    void CopyPages(PdfDocument from, PdfDocument to)
+    int SaveHelper()
     {
+        int insertedId = -1;
+        if (String.IsNullOrWhiteSpace(booklet.filename))
+        {
+            errorMessage = "Must have a file name";
+            return insertedId;
+        }
+        if (booklet.numPages() > 0)
+        {
+            PdfDocument pdfBooklet = new PdfDocument();
+            for (int i = 0; i < booklet.numPages(); i++)
+            {
+                for (int j = 0; j < booklet[i].Doc.PageCount; j++)
+                {
+                    pdfBooklet.AddPage(booklet[i].Doc.Pages[j]);
+                }
+            }
+            string command;
+            using (MemoryStream ms = new MemoryStream())
+            {
+                pdfBooklet.Save(ms);
+                string fileBase64Data = Convert.ToBase64String(ms.ToArray());
+                if (curCompany == -1)
+                {
+                    command = $"INSERT INTO booklets ([name], [file]) OUTPUT Inserted.ID VALUES('{booklet.filename}', CONVERT(VARBINARY(MAX), '{fileBase64Data}'))";
+                }
+                else
+                {
+                    command = $"INSERT INTO booklets ([name], [file], [company_id]) OUTPUT Inserted.ID VALUES('{booklet.filename}', CONVERT(VARBINARY(MAX), '{fileBase64Data}'), {curCompany})";
+                }
+            }
+            DataTable returnDt = Functions.GetDataTableFromSQL(command);
+            if (returnDt.Rows.Count > 0)
+            {
+                insertedId = (int)returnDt.Rows[0][0];
+            }
+            pdfBooklet.Close();
+            int employeeId = int.Parse(booklet.employeeStr);
+            if (employeeId != -1)
+            {
+                Functions.GetDataTableFromSQL($"INSERT INTO userToBooklet ([user_id], [booklet_id]) VALUES({employeeId}, {insertedId})");
+            }
+            errorMessage = "";
+            booklet.reset();
+        }
+        else
+        {
+            errorMessage = "Must have a files added to booklet";
+            return insertedId;
+        }
+        return insertedId;
+    }
+
+    async void DownloadBooklet()
+    {
+        int insertedId = SaveHelper();
+        if (insertedId != -1)
+        {
+            await JSRuntime.InvokeAsync<object>("open", $"api/downloadfile?table=0&fileId={insertedId}", "_blank");
+        }
+    }
+
+    private void OnInputFileChange(IFileListEntry[] fileListEntries)
+    {
+        files = fileListEntries;
+    }
+
+    private async Task SavePage()
+    {
+        if (files == null)
+        {
+            return;
+        }
+        foreach (IFileListEntry file in files)
+        {
+            using (MemoryStream ms = new MemoryStream())
+            {
+                await file.Data.CopyToAsync(ms);
+                string fileBase64Data = Convert.ToBase64String(ms.ToArray());
+                string command;
+                if (curCompany == -1)
+                {
+                    command = $"INSERT INTO pages (custom_page, [name], [file]) VALUES('{false}', '{file.Name}', CONVERT(VARBINARY(MAX), '{fileBase64Data}'))";
+                }
+                else
+                {
+                    command = $"INSERT INTO pages (company_id, custom_page, [name], [file]) VALUES({curCompany}, '{false}', '{file.Name}', CONVERT(VARBINARY(MAX), '{fileBase64Data}'))";
+                }
+                Functions.GetDataTableFromSQL(command);
+            }
+        }
+    }
+
+    public class Booklet
+    {
+        [Required]
+        public string filename { get; set; }
+        public string employeeStr { get; set; }
+        public List<Page> bookletPages;
+        public Booklet()
+        {
+            bookletPages = new List<Page>();
+        }
+        public void add(Page page)
+        {
+            bookletPages.Add(page);
+        }
+        public void removeAt(int index)
+        {
+            bookletPages.RemoveAt(index);
+        }
+        public void insert(int index, Page current)
+        {
+            bookletPages.Insert(index, current);
+        }
+        public int count(string ID)
+        {
+            return bookletPages.Count(a => a.ID.Contains(ID));
+        }
+        public int numPages()
+        {
+            return bookletPages.Count;
+        }
+        public Page this[int index]
+        {
+            get
+            {
+                return bookletPages[index];
+            }
+        }
+        public int getIndex(Page item)
+        {
+            return bookletPages.FindIndex(a => a.ID == item.ID);
+        }
+        public void reset()
+        {
+            filename = "";
+            employeeStr = "-1";
+            bookletPages.Clear();
+        }
     }
 
     public class Page
@@ -260,9 +397,14 @@
         {
             return Name;
         }
-        public Page Copy()
+        public Page Copy(string newId = "")
         {
-            return new Page() { ID = ID, Company_ID = Company_ID, Company_Name = Company_Name, Custom = Custom, Name = Name, Doc = Doc };
+            Page page = new Page() { ID = ID, Company_ID = Company_ID, Company_Name = Company_Name, Custom = Custom, Name = Name, Doc = Doc };
+            if (!string.IsNullOrWhiteSpace(newId))
+            {
+                page.ID = newId;
+            }
+            return page;
         }
     }
 }
