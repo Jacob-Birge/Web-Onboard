@@ -9,11 +9,20 @@
 @inject AuthenticationStateProvider authenticationStateProvider
 @inject IJSRuntime JSRuntime;
 
-<link href="css/main.css" rel="stylesheet" type="text/css" />
-
 <style type="text/css">
     body {
         text-align: left;
+    }
+    #pnlGlobal {
+        width: calc(100% - 42px);
+        background-color: #444;
+        font-family: "Century Gothic", 'Lato', sans-serif;
+        color: #eee;
+        padding: 10px 20px;
+        margin: 10px 0;
+    }
+    #lbCompanies {
+        padding: 11px 10px;
     }
 </style>
 
@@ -23,7 +32,7 @@
 
     @if (curRole == 0)
     {
-        <div ID="pnlGlobal" runat="server" Visible="false">
+        <div ID="pnlGlobal" Visible="false">
             <div style="font-size: 20px; margin: 0 10px 0 0; padding-top: 10px; float: left;">Change company:</div>
             <select id="lbCompanies" @onchange="@CompanyChanged">
                 <option value="-1">Not Selected</option>
@@ -48,7 +57,7 @@
 @if (curRole == 0)
 {
     <div style="margin:auto;text-align:center;">
-        <InputFile OnChange="@OnInputFileChange" multiple accept="application/pdf" />
+        <InputFile OnChange="@OnInputFileChange" multiple />
         <button @onclick="SavePage" class="btn btn-primary">Upload Page</button>
     </div>
     <table style="margin: auto">
@@ -148,13 +157,26 @@
         if (curRole == 0)
         {
             companies_dt = Functions.GetDataTableFromSQL("SELECT [id], [name] FROM [companies]");
-            dt = Functions.GetDataTableFromSQL("SELECT p.[id], p.[company_id], p.[custom_page], p.[name], p.[file], c.[name] FROM [pages] p left join [companies] c on p.company_id=c.id");
             users_dt = Functions.GetDataTableFromSQL("SELECT [id], [user_name], [company_id] FROM [users] WHERE [role_id]=2 and [active]=1");
         }
         else
         {
-            dt = Functions.GetDataTableFromSQL("SELECT [id], [company_id], [custom_page], [name], [file] FROM [pages] WHERE [company_id]=" + curCompany.ToString());
             users_dt = Functions.GetDataTableFromSQL("SELECT [id], [user_name], [company_id] FROM [users] WHERE [role_id]=2 and [active]=1 and [company_id]=" + curCompany.ToString());
+        }
+        updateAllPages();
+        booklet = new Booklet();
+        StateHasChanged();
+    }
+
+    public void updateAllPages()
+    {
+        if (curRole == 0)
+        {
+            dt = Functions.GetDataTableFromSQL("SELECT p.[id], p.[company_id], p.[custom_page], p.[name], p.[file], c.[name] FROM [pages] p left join [companies] c on p.company_id=c.id");
+        }
+        else
+        {
+            dt = Functions.GetDataTableFromSQL("SELECT [id], [company_id], [custom_page], [name], [file] FROM [pages] WHERE [company_id]=" + curCompany.ToString());
         }
         AllPages = new List<Page>();
         foreach (DataRow dr in dt.Rows)
@@ -172,8 +194,6 @@
                 AllPages.Add(new Page() { ID = ";" + dr[0].ToString() + ";", Company_ID = compID, Company_Name = compName, Custom = (bool)dr[2], Name = dr[3].ToString(), Doc = doc });
             }
         }
-        booklet = new Booklet();
-        StateHasChanged();
     }
 
     public void CompanyChanged(ChangeEventArgs e)
@@ -327,18 +347,22 @@
             {
                 await file.Data.CopyToAsync(ms);
                 string fileBase64Data = Convert.ToBase64String(ms.ToArray());
+                string filename = file.Name.Replace(".pdf", "");
                 string command;
                 if (curCompany == -1)
                 {
-                    command = $"INSERT INTO pages (custom_page, [name], [file]) VALUES('{false}', '{file.Name}', CONVERT(VARBINARY(MAX), '{fileBase64Data}'))";
+                    command = $"INSERT INTO pages (custom_page, [name], [file]) VALUES('{false}', '{filename}', CONVERT(VARBINARY(MAX), '{fileBase64Data}'))";
                 }
                 else
                 {
-                    command = $"INSERT INTO pages (company_id, custom_page, [name], [file]) VALUES({curCompany}, '{false}', '{file.Name}', CONVERT(VARBINARY(MAX), '{fileBase64Data}'))";
+                    command = $"INSERT INTO pages (company_id, custom_page, [name], [file]) VALUES({curCompany}, '{false}', '{filename}', CONVERT(VARBINARY(MAX), '{fileBase64Data}'))";
                 }
                 Functions.GetDataTableFromSQL(command);
             }
         }
+        successMessage = "Uploaded successfully";
+        updateAllPages();
+        StateHasChanged();
     }
 
     public class Booklet

@@ -7,11 +7,20 @@
 @inject Blazored.SessionStorage.ISessionStorageService sessionStorage
 @attribute [Authorize(Roles = "Owner, Manager")]
 
-<link href="css/main.css" rel="stylesheet" type="text/css" />
-
 <style type="text/css">
     body {
         text-align: left;
+    }
+    #pnlGlobal {
+        width: calc(100% - 42px);
+        background-color: #444;
+        font-family: "Century Gothic", 'Lato', sans-serif;
+        color: #eee;
+        padding: 10px 20px;
+        margin: 10px 0;
+    }
+    #lbCompanies {
+        padding: 11px 10px;
     }
 </style>
 
@@ -21,7 +30,7 @@
 
     @if (curRole == 0)
     {
-        <div ID="pnlGlobal" runat="server" Visible="false">
+        <div ID="pnlGlobal" Visible="false">
             <div style="font-size: 20px; margin: 0 10px 0 0; padding-top: 10px; float: left;">Change company:</div>
             <select id="lbCompanies" @onchange="@CompanyChanged">
                 <option value="-1">Not Selected</option>
