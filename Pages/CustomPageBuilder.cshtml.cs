@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 
 namespace Web_Onboard.Pages
 {
@@ -42,9 +43,8 @@ namespace Web_Onboard.Pages
         }
         public void OnGetCompanyChange(string compId)
         {
-            curCompany = Int32.Parse(e.Value.ToString());
-            ((CustomAuthenticationStateProvider)authenticationStateProvider).setCompanyId(curCompany);
-            StateHasChanged();
+            companyId = int.Parse(compId);
+            CommonInit();
         }
         private void CommonInit()
         {
