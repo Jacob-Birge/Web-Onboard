@@ -6,11 +6,14 @@
 @inject AuthenticationStateProvider authenticationStateProvider
 @inject Blazored.SessionStorage.ISessionStorageService sessionStorage
 @attribute [Authorize(Roles = "Owner, Manager")]
-
+@*This page is designed for Global Admin and Hiring Managers to manage users.
+    They are able to add/edit/delete users and give them different role.
+    The changes here will directly update the database*@
 <style type="text/css">
     body {
         text-align: left;
     }
+
     #pnlGlobal {
         width: calc(100% - 42px);
         background-color: #444;
@@ -19,6 +22,7 @@
         padding: 10px 20px;
         margin: 10px 0;
     }
+
     #lbCompanies {
         padding: 11px 10px;
     }
@@ -27,7 +31,7 @@
 <h3>User Manager</h3>
 <div ID="upResults">
     <div ID="lblResults" Class="result-box">@(message)</div>
-
+    @*If this is global admin, the page display a drop down that filter the user date by their companyID *@
     @if (curRole == 0)
     {
         <div ID="pnlGlobal" Visible="false">
@@ -57,15 +61,17 @@
 
 <br />
 <br />
+@*Error Message display*@
 @if (errorMessage != "")
 {
     <div id="errorMessage" class="alert alert-danger">@errorMessage</div>
 }
-
+@*Success Message display*@
 @if (successMessage != "")
 {
     <div id="successMessage" class="alert alert-success">@successMessage</div>
 }
+@*When the add button is clicked, it triggers this boolean varible, and display the Add User form*@
 @if (addButtonClicked)
 {
     <div style="margin: auto; text-align: center;">
@@ -85,6 +91,7 @@
             <br>
             <label style="width:100px; text-align:left;">Role ID:</label>
             <select @bind="user.role_id" style="width:150px; height:30px;">
+                @*Only Global Admin can set user role to Global Admin*@
                 @if (curRole == 0)
                 {
                     <option value="0">CPMA Admin</option>
@@ -102,11 +109,13 @@
 }
 
 <div style="width: 100%; text-align: left;">
+    @*Display Users Table to Glabal Admin and Hiring Manager*@
     @if (curRole == 0 || curRole == 1)
     {
         <div class="main" style="display: flex; flex-direction: column;">
             @foreach (DataRow dr in (dt.Rows))
             {
+                //Check CompamyID Null value, if Null, value is set to -1
                 int companyID = (dr["company_id"] == DBNull.Value) ? -1 : (int)dr["company_id"];
                 @if ((curCompany == -1 || curCompany == companyID) && curUserId != (int)dr["id"])
                 {
@@ -120,6 +129,8 @@
                             <img src="Images/edit.png" style="height:25px; position: relative; width:25px" />
                         </button>
                     </div>
+                    //This displays the detailed information when one user is clicked
+                    //They are able to edit/delete user information.
 
                     @if ((int)userSelected == (int)dr[0])
                     {
@@ -186,25 +197,28 @@
     private int editedRoleID = 999;
     private string roleName = "";
 
-
+    //This runs at the benginning of the program
     protected override async Task OnInitializedAsync()
     {
         curCompany = ((CustomAuthenticationStateProvider)authenticationStateProvider).getCompanyId();
         curRole = ((CustomAuthenticationStateProvider)authenticationStateProvider).getRoleId();
         curUserId = ((CustomAuthenticationStateProvider)authenticationStateProvider).getUserId();
+        //For Global Admin, we want to have all the information from users Table and companies Table
         if (curRole == 0)
         {
             companies_dt = Functions.GetDataTableFromSQL("SELECT [id], [name] FROM [companies]");
             dt = Functions.GetDataTableFromSQL("SELECT u.[id], u.[user_name], u.[role_id], u.[company_id], u.[email], c.[name] FROM [users] u left join [companies] c on u.company_id=c.id where u.[active]=1");
             //curCompany = (curCompany == -1) ? (int)companies_dt.Rows[0][0] : curCompany;
         }
+        //For hiring manager and new hires, they are only allow to have the data of their current company
         else
         {
+
             dt = Functions.GetDataTableFromSQL("SELECT [id], [user_name], [role_id], [company_id], [email] FROM [users] WHERE [active]=1 and [company_id]=" + curCompany.ToString());
         }
     }
 
-    //check if the add user button is clicked
+    //Check if the add user button is clicked
     public void UserAddedButtonToggle()
     {
         resetMessages();
@@ -245,7 +259,7 @@
             user.role_id = "2";
             user.username = "";
 
-            //reload page
+            //Reload page
             successMessage = "Successfull!";
         }
 
@@ -351,7 +365,7 @@
 
         StateHasChanged();
     }
-
+    //Fucntion to check if the username exists in the database
     private bool usernameExists(string username, int UserId = -1)
     {
         DataTable testDt;
@@ -371,7 +385,7 @@
         errorMessage = "";
         successMessage = "";
     }
-
+    //Data model.
     public class AddUser
     {
         [Required]
