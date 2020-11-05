@@ -42,9 +42,9 @@ namespace Web_Onboard.Pages
         }
         public void OnGetCompanyChange(string compId)
         {
-            companyId = int.Parse(compId);
-
-            CommonInit();
+            curCompany = Int32.Parse(e.Value.ToString());
+            ((CustomAuthenticationStateProvider)authenticationStateProvider).setCompanyId(curCompany);
+            StateHasChanged();
         }
         private void CommonInit()
         {

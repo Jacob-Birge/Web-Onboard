@@ -1,0 +1,503 @@
+﻿@page
+@model Web_Onboard.Pages.EventEditorModel
+@namespace Web_Onboard.Shared
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    ViewData["Title"] = "Event Editor";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Web-Onboard</title>
+    <base href="/" />
+    <link rel="icon" href="favicon.png" />
+
+    <script src="https://cdn.quilljs.com/1.1.3/quill.js"></script>
+    <script src="https://cdn.quilljs.com/1.1.3/quill.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+
+    <script type="text/javascript" src="js/main.js"></script>
+
+    <link href="https://cdn.quilljs.com/1.1.3/quill.snow.css" rel="stylesheet" />
+    <link href="https://cdn.quilljs.com/1.1.3/quill.bubble.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css" rel="stylesheet" />
+
+
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link href="css/site.css" rel="stylesheet" />
+
+    <link href="css/main.css" rel="stylesheet" type="text/css" />
+
+    <script type="text/javascript">
+        var changes_made = false;
+        var changes_pending = false;
+        var edit_mode = false;
+        var delete_enabled = false;
+
+        var name_bank = "";
+        var resparty_bank = "";
+        var desc_bank = "";
+        var scheme_bank = "";
+
+        $(function () {
+            var toolbarOptions = [
+                ['bold', 'italic', 'underline', 'strike'],        // toggled buttons
+                ['blockquote', 'code-block'],
+
+                //[{ 'header': 1 }, { 'header': 2 }],               // custom button values
+                [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                [{ 'script': 'sub' }, { 'script': 'super' }],      // superscript/subscript
+                [{ 'indent': '-1' }, { 'indent': '+1' }],          // outdent/indent
+                //[{ 'direction': 'rtl' }],                         // text direction
+
+                [{ 'size': ['small', false, 'large', 'huge'] }],  // custom dropdown
+                [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+
+                [{ 'color': [] }, { 'background': [] }],          // dropdown with defaults from theme
+                //[{ 'font': [] }],
+                [{ 'align': [] }],
+                ['link', 'image']//,
+
+                //['clean']
+            ];
+
+            var quill = new Quill('#editor', {
+                modules: {
+                    toolbar: toolbarOptions
+                },
+                theme: 'snow'
+            });
+
+            $('#txtSearchItemsClient').keypress(function (e) {
+                if (e.keyCode == 13) {
+                    e.preventDefault();
+
+                    $("#cphBody_txtSearchItems").val($(this).val());
+                    $('#cphBody_btnSearchItems').trigger('click');
+                }
+            });
+
+            search_autocomplete();
+            set_listbox();
+            set_scheme_dd();
+
+            //Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
+            //    if (changes_pending) {
+            //        var btnDelete = $("#btnDelete_Client");
+
+            //        disable_btn('cphBody_btnSave');
+
+            //        set_banks();
+
+            //        $("#editor").find(".ql-editor").html(desc_bank);
+
+            //        if (edit_mode) {
+            //            btnDelete.css('display', 'inline-block');
+            //            enable_btn('btnDelete_Client', 'cbutton-3');
+            //            delete_enabled = true;
+            //        }
+            //        else {
+            //            disable_btn('btnDelete_Client');
+            //        }
+
+            //        changes_pending = false;
+            //        changes_made = false;
+            //    }
+
+            //    search_autocomplete();
+            //    set_listbox();
+            //    set_scheme_dd();
+            //    add_listeners();
+
+            //    $('#txtSearchItemsClient').keypress(function (e) {
+            //        if (e.keyCode == 13) {
+            //            e.preventDefault();
+
+            //            $("#cphBody_txtSearchItems").val($(this).val());
+            //            $('#cphBody_btnSearchItems').trigger('click');
+            //        }
+            //    });
+            //});
+
+            $("#editor").find(".ql-editor").html($("#cphBody_txtDescription").val());
+            if ($("#cphBody_txtTitle").val() != "") {
+                enable_btn('btnDelete_Client', 'cbutton-3');
+                delete_enabled = true;
+                edit_mode = true;
+                set_banks();
+                add_listeners();
+            }
+        });
+
+        function set_listbox() {
+            var click_event = function (obj) {
+                var id = "cphBody_lbEvents";
+                var elm = $("#" + id);
+                var new_id = id + "-new";
+                var old_selected_value = 0;
+
+                if (changes_made) {
+                    var confirm = $('<div title="WARNING!" style="text-align: left;"><p><span class="ui-icon ui-icon-alert" style="float:left; margin:12px 12px 20px 0;"></span>Your current changes have not been saved. Any changes you have made will be lost.</p></div>').dialog({
+                        resizable: false,
+                        height: "auto",
+                        width: 400,
+                        modal: true,
+                        buttons: {
+                            "Don't Save": function () {
+                                changes_pending = true;
+                                edit_mode = true;
+
+                                obj.css("background-color", obj.css("background-color").replace("0.3", "1"));
+
+                                obj.css("color", "#fff");
+
+                                $("#" + id).find("option").removeAttr("selected");
+                                $("#" + id).find("option").eq(obj.index()).attr('selected', 'selected');
+
+                                $("#cphBody_btnLoadEvent").trigger("click");
+
+                                confirm.dialog('close');
+                            },
+                            "Cancel": function () {
+                                confirm.dialog('close');
+                            }
+                        }
+                    });
+                }
+                else {
+                    changes_pending = true;
+                    edit_mode = true;
+
+                    obj.css("background-color", obj.css("background-color").replace("0.3", "1"));
+                    obj.css("color", "#fff");
+
+                    $("#" + id).find("option").removeAttr("selected");
+                    $("#" + id).find("option").eq(obj.index()).attr('selected', 'selected');
+
+                    $("#cphBody_btnLoadEvent").trigger("click");
+                }
+            };
+
+            if (create_listbox("cphBody_lbEvents", click_event)) {
+                $("#cphBody_lbEvents-new").find(".list-option").hover(function () {
+                    $(this).css("background-color", $(this).css("background-color").replace("0.3", "0.4"));
+                }, function () {
+                    $(this).css("background-color", $(this).css("background-color").replace("0.4", "0.3"));
+                });
+            }
+        }
+
+        function set_banks() {
+            name_bank = $("#cphBody_txtTitle").val();
+            resparty_bank = $("#cphBody_txtResParty").val();
+            desc_bank = $("#cphBody_txtDescription").val();
+            scheme_bank = $("#cphBody_ddColorSchemes").val();
+        }
+
+
+        function add_listeners() {
+            if (edit_mode) {
+                var txtTitle = $("#cphBody_txtTitle");
+                var txtResParty = $("#cphBody_txtResParty");
+                var txtDescription = $("#editor").find(".ql-editor");
+
+                txtTitle.unbind();
+                txtResParty.unbind();
+                txtDescription.unbind();
+
+                txtTitle.keyup(function () { check_changed(); });
+                txtResParty.keyup(function () { check_changed(); });
+                txtDescription.keyup(function () { check_changed(); });
+            }
+        }
+
+        function check_changed() {
+            if (edit_mode) {
+                var txtTitle = $("#cphBody_txtTitle");
+                var txtResParty = $("#cphBody_txtResParty")
+                var txtDescription = $("#editor").find(".ql-editor");
+                var ddScheme = $("#cphBody_ddColorSchemes");
+
+                if (txtTitle.val() != name_bank || txtDescription.html() != desc_bank || txtResParty.val() != resparty_bank || ddScheme.val() != scheme_bank) {
+                    changes_made = true;
+                    enable_btn('cphBody_btnSave', 'cbutton-2');
+                }
+                else {
+                    changes_made = false;
+                    disable_btn('cphBody_btnSave');
+                }
+            }
+        }
+
+        function check_save() {
+            var txtTitle = $("#cphBody_txtTitle");
+            changes_pending = true;
+            edit_mode = true;
+
+            $("#cphBody_lbEvents-new .list-option[name=" + $("#cphBody_lbEvents").val() + "]").html(txtTitle.val());
+            txtTitle.val($("#cphBody_lbEvents").val() + "{or}" + txtTitle.val());
+            $("#cphBody_txtDescription").val($("#editor").find(".ql-editor").html());
+
+            return true;
+        }
+
+        function check_save_as() {
+            changes_pending = true;
+            edit_mode = true;
+
+            $("#cphBody_txtDescription").val($("#editor").find(".ql-editor").html());
+            return true;
+        }
+
+        function confirm_delete() {
+            if (delete_enabled) {
+                var confirm = $('<div title="WARNING!" style="text-align: left;"><p><span class="ui-icon ui-icon-alert" style="float:left; margin:12px 12px 20px 0;"></span>Are you sure you want to delete the event: ' + $("#cphBody_lbEvents-new .list-option[name='" + $("#cphBody_lbEvents").val() + "']").html() + '?</p></div>').dialog({
+                    resizable: false,
+                    height: "auto",
+                    width: 400,
+                    modal: true,
+                    buttons: {
+                        'Delete': function () {
+                            edit_mode = false;
+                            $("#editor").find(".ql-editor").html("");
+                            $("#cphBody_btnDelete").trigger("click");
+                            confirm.dialog('close');
+                        },
+                        "Cancel": function () {
+                            confirm.dialog('close');
+                        }
+                    }
+                });
+            }
+        }
+
+        function search_autocomplete() {
+            var events = [];
+            $("#cphBody_lbAllEvents option").each(function () {
+                events.push($(this).html());
+            });
+
+            $("#txtSearchItemsClient").autocomplete({
+                source: events,
+                select: function (event, ui) {
+                    $("#cphBody_txtSearchItems").val($(this).val());
+                    $('#cphBody_btnSearchItems').trigger('click');
+                }
+            });
+        }
+
+        function set_scheme_dd() {
+            var click_event = function (obj) {
+                $("#cphBody_ddColorSchemes-new-text").html($(obj).html() + " <span style='font-size: 10px; margin: 0 0 0 5px;'>&#x25BC;</span>");
+                $(obj).parent().parent().css('background-color', $(obj).html());
+
+                $("#cphBody_ddColorSchemes").find("option").removeAttr("selected");
+                $("#cphBody_ddColorSchemes").find("option").eq(obj.index()).attr('selected', 'selected');
+
+                $("#cphBody_ddColorSchemes-new .drop-list").css("display", "none");
+
+                check_changed();
+            };
+
+            var elm = $("#cphBody_ddColorSchemes");
+            var new_id = "cphBody_ddColorSchemes-new";
+            var result = "<div class='drop-down' id='" + new_id + "' style='background-color: " + elm.find("option:selected").html() + ";'><div id='" + new_id + "-text'>" + elm.find("option:selected").html() + " <span style='font-size: 10px; margin: 0 0 0 5px;'>&#x25BC;</span></div><div class='drop-list'>";
+
+            elm.find("option").each(function () {
+                result += "<div class='drop-option' name='" + $(this).val() + "' style='background-color: " + $(this).html() + ";'>" + $(this).html() + "</div>";
+            });
+
+            result += "</div></div>";
+            $(result).insertAfter(elm);
+            //elm.css("display", "none");
+
+            $("#" + new_id).find(".drop-option").each(function () {
+                $(this).click(function () {
+                    LoadHtml(click_event, $(this));
+                });
+
+                var hold_hex = "";
+                $(this).hover(function () {
+                    hold_hex = $(this).css("background-color")
+                    $(this).css("background-color", hexToRgbA($(this).html(), 0.8));
+                }, function () {
+                    $(this).css("background-color", hold_hex);
+                });
+            });
+
+
+            $("#cphBody_ddColorSchemes-new").hover(function () {
+                $("#" + new_id).find(".drop-list").css("display", "block");
+            }, function () {
+                $("#" + new_id).find(".drop-list").css("display", "none");
+            });
+        }
+    </script>
+
+    <script>
+    </script>
+
+    <script>
+        function changeCompany(val) {
+            var pathname = window.location.pathname;
+            var handler = "?handler=CompanyChange";
+            var actionpath = pathname + handler;
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+
+                }
+            };
+            xhttp.open("GET", actionpath + "&compId=" + val, true);
+            xhttp.send();
+        }
+
+
+        function changeEvent(val) {
+            var pathname = window.location.pathname;
+            var handler = "?handler=ChangeEvent";
+            var actionpath = pathname + handler;
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+
+                }
+            };
+            xhttp.open("GET", actionpath + "&eventId=" + val, true);
+            xhttp.send();
+        }
+
+    </script>
+
+    <style type="text/css">
+        body {
+            text-align: left;
+        }
+
+        #filters {
+            width: calc(100% - 42px);
+            background-color: #f7f7f7;
+            border: 1px solid #bbb;
+            padding: 20px;
+        }
+
+        #editor {
+            background-color: #fff;
+        }
+
+        #event_container {
+            height: 244px;
+            width: 200px;
+            overflow-y: scroll;
+            margin-top: 10px;
+            border: 1px solid #bbb;
+            background-color: #fff;
+        }
+
+        .ui-autocomplete {
+            text-align: left;
+        }
+
+        #main_section {
+            width: calc(100% - 244px);
+        }
+
+        #body_wrapper table {
+            border-collapse: collapse;
+        }
+
+        #body_wrapper td {
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <app>
+        <div class="sidebar">
+            <component type="typeof(NavMenuViewCaller)" render-mode="Server" />
+        </div>
+
+        <div class="main">
+            <div class="top-row px-4">
+                <div style="float:right; margin-top: .5rem; margin-bottom: 1rem;">
+                    <button class="btn btn-dark" onclick="location.href = '/editprofile';">Edit Profile</button>
+                    <button class="btn btn-danger" onclick="location.href = '/logout';">Logout</button>
+                </div>
+            </div>
+
+            <div ID="upResults" runat="server">
+                <div ID="lblResults" Class="result-box">Welcome to the event editor!</div>
+
+                <div ID="pnlGlobal" runat="server" Visible="false">
+                    <div style="font-size: 20px; margin: 0 10px 0 0; padding-top: 10px; float: left;">Change company:</div>
+                    <div style="float: right; color: #888; padding: 25px 0 0 0;">Global Admin Only</div>
+                </div>
+            </div>
+            <table style="width: 100%;">
+                <tr valign="top">
+                    <td style="width: 240px;">
+                        <div style="background-color: #eee; border-bottom: 1px solid #bbb; padding: 20px; width: 200px;">
+                        </div>
+                    </td>
+                    <td id="main_section">
+                        <div id="filters">
+                            <table>
+                                <tr valign="top">
+                                    <td style="width: 230px;">
+                                        <div ID="upText" runat="server">
+                                            <div style="font-size: 20px; font-weight: bold;">Event Name:</div>
+                                            <input type="text" ID="txtTitle" placeholder="Title" autocomplete="off" />
+                                            <br />
+                                            <br />
+                                            <div style="font-size: 20px; font-weight: bold;">Color Scheme:</div>
+                                            <!--<asp:DropDownList ID="ddColorSchemes" DataValueField="id" DataTextField="background_color" style="display: none;" runat="server"></asp:DropDownList>-->
+                                            <br />
+                                            <br />
+                                            <div ID="btnSave" Class="cbutton-1" OnClientClick="return check_save();" style="display: inline-block; margin: 10px 5px 10px 0;">Save</div>
+                                            <div ID="btnSaveAs" Class="cbutton-2" OnClientClick="return check_save_as();" style="display: inline-block; margin: 10px 5px 10px 0;">Save As</div>
+                                            <div id="btnDelete_Client" onclick="confirm_delete();" class="cbutton-1" style="display: inline-block; margin: 10px 5px;">Delete</div>
+                                            <div ID="btnDelete" Class="cbutton-3" style="display: none;">Delete</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div ID="upButtons" runat="server">
+                                            <div style="font-size: 20px; font-weight: bold;">Responsible Party:</div>
+                                            <input type="text" ID="txtResParty" runat="server" placeholder="Res. Party" autocomplete="off" />
+                                            <input type="text" ID="txtDescription" runat="server" style="display: none;" />
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">
+                                        <div style="font-size: 20px; font-weight: bold;">Description:</div>
+                                        <div id="editor"></div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </app>
+
+    <div id="blazor-error-ui">
+        <environment include="Staging,Production">
+            An error has occurred. This application may no longer respond until reloaded.
+        </environment>
+        <environment include="Development">
+            An unhandled exception has occurred. See browser dev tools for details.
+        </environment>
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+
+    <script src="_framework/blazor.server.js"></script>
+</body>
+</html>

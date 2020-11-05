@@ -1,7 +1,352 @@
 ﻿@page "/eventmanager"
+@using System.Collections.Generic;
+@using Microsoft.AspNetCore.Mvc.RazorPages;
+@using Web_Onboard.Data;
+@using Microsoft.AspNetCore.Components.Authorization;
+@using Microsoft.AspNetCore.Mvc.Rendering;
+@using System.Data;
+@using Microsoft.AspNetCore.Mvc;
+@using System.Data.SqlClient;
+@using Microsoft.AspNetCore.Mvc.Formatters;
+@using System.Web;
+@using System;
+@using Microsoft.JSInterop;
+@using System.Threading.Tasks;
+
+@inject NavigationManager navigationManager
+@inject AuthenticationStateProvider authenticationStateProvider
+@inject Blazored.SessionStorage.ISessionStorageService sessionStorage
 @attribute [Authorize(Roles = "Owner, Manager")]
-<h3>Event Manager</h3>
 
-@code {
 
-}
+    <link href="https://cdn.quilljs.com/1.1.3/quill.snow.css" rel="stylesheet" />
+    <link href="https://cdn.quilljs.com/1.1.3/quill.bubble.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css" rel="stylesheet" />
+
+
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link href="css/site.css" rel="stylesheet" />
+
+    <link href="css/main.css" rel="stylesheet" type="text/css" />
+
+    <style type="text/css">
+        body {
+            text-align: left;
+        }
+
+        #filters {
+            width: calc(100% - 42px);
+            background-color: #f7f7f7;
+            border: 1px solid #bbb;
+            padding: 20px;
+        }
+
+        #editor {
+            background-color: #fff;
+        }
+
+        #event_container {
+            height: 244px;
+            width: 200px;
+            overflow-y: scroll;
+            margin-top: 10px;
+            border: 1px solid #bbb;
+            background-color: #fff;
+        }
+
+        .ui-autocomplete {
+            text-align: left;
+        }
+
+        #main_section {
+            width: calc(100% - 244px);
+        }
+
+        #body_wrapper table {
+            border-collapse: collapse;
+        }
+
+        #body_wrapper td {
+            padding: 0;
+        }
+    </style>
+
+    <h3>Event Manager</h3>
+
+    <div ID="upResults" runat="server">
+        <div ID="lblResults" Class="result-box">@(message)</div>
+
+        <div ID="pnlGlobal" runat="server" Visible="false">
+            <div style="font-size: 20px; margin: 0 10px 0 0; padding-top: 10px; float: left;">Change company:</div>
+            <select id="lbCompanies" @onchange="@((ChangeEventArgs __e) => ChangeCompany(__e.Value.ToString()))">
+                @foreach (DataRow dr in companies_dt.Rows)
+                {
+                    <option value="@(dr["id"].ToString())">@(dr["name"].ToString())</option>
+                }
+            </select>
+            <div style="float: right; color: #888; padding: 25px 0 0 0;">Global Admin Only</div>
+        </div>
+    </div>
+    <table style="width: 100%;">
+        <tr valign="top">
+            <td style="width: 240px;">
+                <div style="background-color: #eee; border-bottom: 1px solid #bbb; padding: 20px; width: 240px;">
+                    <select id="lbAllEvents" style="width: 200px;" @onchange="@((ChangeEventArgs __e) => ChangeEvent(__e.Value.ToString()))">
+                        @foreach (DataRow dr in allevents.Rows)
+                        {
+                            <option value="@(dr["id"].ToString())">@(dr["title"].ToString())</option>
+                        }
+                    </select>
+                </div>
+            </td>
+            <td id="main_section">
+                <div id="filters">
+                    <table>
+                        <tr valign="top">
+                            <td style="width: 230px;">
+                                <div ID="upText" runat="server">
+                                    <div style="font-size: 20px; font-weight: bold;">Event Name:</div>
+                                    <input type="text" @bind="event_name" ID="txtTitle" placeholder="Title" autocomplete="off" />
+                                    <br />
+                                    <br />
+                                    <div style="font-size: 20px; font-weight: bold;">Color Scheme:</div>
+                                    <!--<asp:DropDownList ID="ddColorSchemes" DataValueField="id" DataTextField="background_color" style="display: none;" runat="server"></asp:DropDownList>-->
+                                    <select id="ddColorSchemes">
+                                        @foreach (DataRow dr in colors_dt.Rows)
+                                        {
+                                            <option value="@(dr["id"].ToString())">@(dr["background_color"].ToString())</option>
+                                        }
+                                    </select>
+                                    <br />
+                                    <br />
+                                </div>
+                            </td>
+                            <td>
+                                <div ID="upButtons" runat="server">
+                                    <div style="font-size: 20px; font-weight: bold;">Responsible Party:</div>
+                                    <input type="text" @bind="res_party" ID="txtResParty" runat="server" placeholder="Res. Party" autocomplete="off" />
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                <div style="font-size: 20px; font-weight: bold;">Description:</div>
+                                <input type="text" @bind="desc" ID="txtDescription" runat="server" style="height: 200px; width: 300px;" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                <br />
+                                <div ID="btnSave" @onclick="save_click" Class="cbutton-2" OnClientClick="return check_save();" style="display: inline-block; margin: 10px 5px 10px 0;">Save</div>
+                                <div ID="btnSaveAs" @onclick="saveas_click" Class="cbutton-2" OnClientClick="return check_save_as();" style="display: inline-block; margin: 10px 5px 10px 0;">Save As</div>
+                                <div id="btnDelete_Client" @onclick="delete" class="cbutton-3" style="display: inline-block; margin: 10px 5px;">Delete</div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    @code {
+
+        public int companyId { get; set; }
+        public int roleId { get; set; }
+        public string name { get; set; }
+
+        private int curCompany = -1;
+        private int curRole = -1;
+        private int curEvent = -1;
+
+        public string message = "Welcome to the event editor!";
+
+        public string event_name = "";
+        public string res_party = "";
+        public string color_scheme = "";
+        public string desc = "";
+
+        private DataTable dt = new DataTable();
+        private DataTable companies_dt = new DataTable();
+        private DataTable colors_dt = new DataTable();
+        private DataTable allevents = new DataTable();
+
+        protected override async Task OnInitializedAsync()
+        {
+            int? tempComp = await sessionStorage.GetItemAsync<int>("companyId");
+            if (tempComp.HasValue)
+            {
+                curCompany = tempComp.Value;
+            }
+            int? tempRole = await sessionStorage.GetItemAsync<int>("roleId");
+            if (tempRole.HasValue)
+            {
+                curRole = tempRole.Value;
+            }
+            if (curRole == 0)
+            {
+                companies_dt = Functions.GetDataTableFromSQL("SELECT [id], [name] FROM [companies]");
+                dt = Functions.GetDataTableFromSQL("SELECT u.[id], u.[user_name], u.[role_id], u.[company_id], u.[email], c.[name] FROM [users] u left join [companies] c on u.company_id=c.id");
+
+            }
+            else
+            {
+                dt = Functions.GetDataTableFromSQL("SELECT [id], [user_name], [role_id], [company_id], [email] FROM [users] WHERE [company_id]=" + curCompany.ToString());
+            }
+
+            colors_dt = Functions.GetDataTableFromSQL("SELECT [background_color], [id] FROM [item_color_schemes] ORDER BY [id]");
+
+            //bind_lbData("", -1, false);
+
+            CommonInit();
+        }
+
+        private void CommonInit()
+        {
+            roleId = curRole;
+            if (roleId == 0)
+            {
+
+            }
+        }
+
+        public void ChangeCompany(string i)
+        {
+            companyId = Int32.Parse(i);
+            bind_lbData("", -1, false);
+        }
+
+        public void ChangeEvent(string s)
+        {
+            curEvent = Int32.Parse(s);
+            DataTable dt_event = Functions.GetDataTableFromSQL("Select [id], [Title], [res_party], [description], [color_scheme] FROM [items] WHERE [id] = " + s);
+
+            if (dt_event.Rows.Count > 0)
+            {
+                event_name = dt_event.Rows[0]["Title"].ToString();
+                res_party = dt_event.Rows[0]["res_party"].ToString();
+                color_scheme = dt_event.Rows[0]["color_scheme"].ToString();
+                desc = dt_event.Rows[0]["description"].ToString();
+
+                message = "Now editing the '" + dt_event.Rows[0]["Title"].ToString() + "' event.";
+            }
+            else
+            {
+                message = "ERROR: Could not find event.";
+            }
+
+            StateHasChanged();
+        }
+
+        private void bind_lbData(string ss, int v, bool to_top)
+        {
+            allevents = Functions.GetDataTableFromSQL("SELECT [id], [title] FROM [items] WHERE [company_id] = " + companyId.ToString() + " ORDER BY [title]");
+
+            SqlConnection conn = new SqlConnection(Functions.strConn);
+            SqlCommand cmd = new SqlCommand();
+
+            cmd.CommandText = "sp_Test";
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Connection = conn;
+
+            cmd.Parameters.AddWithValue("@a", companyId.ToString());
+
+            conn.Open();
+
+            cmd.ExecuteNonQuery();
+
+            conn.Close();
+
+            StateHasChanged();
+        }
+
+        private void save_click()
+        {
+            SqlConnection conn = new SqlConnection(Functions.strConn);
+            SqlCommand cmd = new SqlCommand();
+
+            cmd.CommandText = "sp_SaveEvent";
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Connection = conn;
+
+            cmd.Parameters.AddWithValue("@title", event_name);
+            cmd.Parameters.AddWithValue("@event_id", curEvent);
+            cmd.Parameters.AddWithValue("@company_id", companyId.ToString());
+            cmd.Parameters.AddWithValue("@or", 1);
+            cmd.Parameters.AddWithValue("@resparty", res_party);
+            cmd.Parameters.AddWithValue("@description", desc);
+            cmd.Parameters.AddWithValue("@scheme_id", color_scheme);
+
+            conn.Open();
+
+            cmd.ExecuteNonQuery();
+
+            conn.Close();
+
+            bind_lbData("", -1, false);
+
+            message = "Event '" + event_name + "' saved successfully!";
+
+            StateHasChanged();
+        }
+
+
+        private void saveas_click()
+        {
+            SqlConnection conn = new SqlConnection(Functions.strConn);
+            SqlCommand cmd = new SqlCommand();
+
+            cmd.CommandText = "sp_SaveEvent";
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Connection = conn;
+
+            cmd.Parameters.AddWithValue("@title", event_name);
+            cmd.Parameters.AddWithValue("@event_id", curEvent);
+            cmd.Parameters.AddWithValue("@company_id", companyId.ToString());
+            cmd.Parameters.AddWithValue("@or", 0);
+            cmd.Parameters.AddWithValue("@resparty", res_party);
+            cmd.Parameters.AddWithValue("@description", desc);
+            cmd.Parameters.AddWithValue("@scheme_id", color_scheme);
+
+            conn.Open();
+
+            cmd.ExecuteNonQuery();
+
+            conn.Close();
+
+            bind_lbData("", -1, false);
+
+            message = "Event '" + event_name + "' created successfully!";
+
+            StateHasChanged();
+        }
+
+
+        private void delete()
+        {
+
+            SqlConnection conn = new SqlConnection(Functions.strConn);
+            SqlCommand cmd = new SqlCommand();
+
+            cmd.CommandText = "sp_DeleteEvent";
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Connection = conn;
+
+            cmd.Parameters.AddWithValue("@event_id", curEvent);
+
+            conn.Open();
+
+            cmd.ExecuteNonQuery();
+
+            conn.Close();
+            
+            message = "Event '" + event_name + "' deleted successfully!";
+
+            event_name = "";
+            res_party = "";
+            desc = "";
+
+            bind_lbData("", -1, false);
+
+            StateHasChanged();
+        }
+    }
