@@ -275,12 +275,14 @@
         }
         if (string.IsNullOrWhiteSpace(editedEmail))
         {
+            Functions.GetDataTableFromSQL($"UPDATE users SET user_name = '{editedName}',role_id = '{editedRoleID}' WHERE id = '{UserID}'");
 
-            Functions.GetDataTableFromSQL($"UPDATE users SET user_name = '{editedName}',role_id = '{editedRoleID}',email = '{editedEmail}' WHERE id = '{UserID}'");
+
         }
         else
         {
-            Functions.GetDataTableFromSQL($"UPDATE users SET user_name = '{editedName}',role_id = '{editedRoleID}' WHERE id = '{UserID}'");
+            Functions.GetDataTableFromSQL($"UPDATE users SET user_name = '{editedName}',role_id = '{editedRoleID}',email = '{editedEmail}' WHERE id = '{UserID}'");
+     
         }
 
         if (curRole == 0)
