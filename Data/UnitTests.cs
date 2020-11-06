@@ -7,6 +7,7 @@ namespace Web_Onboard.Data
 {
     public class UnitTests
     {
+        public List<string> outputs = new List<string>();
         public UnitTests()
         {
 

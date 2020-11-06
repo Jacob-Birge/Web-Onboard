@@ -23,7 +23,8 @@ namespace Web_Onboard.Data
         {
             Owner,
             Manager,
-            BaseUser
+            BaseUser,
+            UnitTester
         }
 
         private ISessionStorageService _sessionStorageService;
@@ -54,13 +55,20 @@ namespace Web_Onboard.Data
                 _companyId = -1;
 
             Roles userRole;
-            if (roleId.HasValue && (roleId > (int)Roles.BaseUser || roleId < (int)Roles.Owner))
+            if (roleId.HasValue)
             {
-                userRole = Roles.BaseUser;
+                if (roleId > (int)Roles.UnitTester || roleId < (int)Roles.Owner)
+                {
+                    userRole = Roles.BaseUser;
+                }
+                else
+                {
+                    userRole = (Roles)roleId;
+                }
             }
             else
             {
-                userRole = (Roles)roleId;
+                userRole = Roles.BaseUser;
             }
 
             if (!companyId.HasValue)
@@ -108,7 +116,7 @@ namespace Web_Onboard.Data
             await _sessionStorageService.SetItemAsync("companyId", _companyId);
 
             Roles userRole;
-            if (roleId > (int)Roles.BaseUser || roleId < (int)Roles.Owner)
+            if (roleId > (int)Roles.UnitTester || roleId < (int)Roles.Owner)
             {
                 userRole = Roles.BaseUser;
             }

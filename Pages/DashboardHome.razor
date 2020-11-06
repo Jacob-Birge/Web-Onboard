@@ -57,12 +57,35 @@
         </div>
     </Authorized>
 </AuthorizeView>
+<AuthorizeView Roles="UnitTester">
+    <Authorized>
+        <div style="text-align:center;">
+            <h1>Run unit tests</h1>
+            <br />
+            <button @onclick="ConductTests">Run</button>
+            <br />
+            @if (testOutputs.Count > 0)
+            {
+                <h3>Outputs from tests:</h3>
+                foreach (string s in testOutputs)
+                {
+
+                }
+            }
+            else
+            {
+                <h3>No tests have been ran.</h3>
+            }
+        </div>
+    </Authorized>
+</AuthorizeView>
 
 @code{
     private string firstname = "";
     private int curRole = -1;
     private int curUserId = -1;
     DataTable dt = new DataTable();
+    private List<string> testOutputs = new List<string>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -87,5 +110,12 @@
             await JSRuntime.InvokeAsync<object>("open", $"api/downloadfile?table=0&fileId={id}", "_blank");
         }
         catch { }
+    }
+
+    void ConductTests()
+    {
+        UnitTests test = new UnitTests();
+        testOutputs = test.outputs;
+        StateHasChanged();
     }
 }
