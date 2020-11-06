@@ -15,7 +15,7 @@
             Web-Onboard
         </h1>
         <div style="width: 90%; padding: 5%; background-color: #fff; text-align: left;">
-            <EditForm Model="@user" OnValidSubmit="@ValidateUser">
+            <EditForm Model="@user" OnValidSubmit="@(()=>ValidateUser(false))">
                 <DataAnnotationsValidator />
                 @if (@errorMessage != "")
                 {
@@ -49,7 +49,7 @@
 </div>
 
 @code {
-    private User user = new User();
+    public User user = new User();
     private string errorMessage = "";
 
     protected override async Task OnInitializedAsync()
@@ -61,7 +61,7 @@
         }
     }
 
-    protected async Task<bool> ValidateUser()
+    public async Task<bool> ValidateUser(bool testing)
     {
         DataTable dt = Functions.GetDataTableFromSQL("SELECT [id], [role_id], [company_id], [user_name], [password], [reset_pass], [first_name], [last_name], [email] FROM [users] WHERE [user_name] = '" + user.username + "' AND [password] = '" + user.password + "'");
 
@@ -76,25 +76,52 @@
                 int companyId = (dt.Rows[0][2] == System.DBNull.Value) ? -1 : (int)dt.Rows[0][2];
                 if ((bool)dt.Rows[0][5])
                 {
-                    ((CustomAuthenticationStateProvider)authenticationStateProvider).HoldForReset((string)(dt.Rows[0][3]), userId, roleId, companyId, dt.Rows[0][6].ToString(), dt.Rows[0][7].ToString(), dt.Rows[0][8].ToString());
-                    navigationManager.NavigateTo("/resetpassword");
+                    if (testing)
+                    {
+                        return await Task.FromResult(true);
+                    }
+                    else
+                    {
+                        ((CustomAuthenticationStateProvider)authenticationStateProvider).HoldForReset((string)(dt.Rows[0][3]), userId, roleId, companyId, dt.Rows[0][6].ToString(), dt.Rows[0][7].ToString(), dt.Rows[0][8].ToString());
+                        navigationManager.NavigateTo("/resetpassword");
+                    }
                 }
                 else
                 {
-                    ((CustomAuthenticationStateProvider)authenticationStateProvider).MarkUserAsAuthenticated(user.username, userId, roleId, companyId, dt.Rows[0][6].ToString(), dt.Rows[0][7].ToString(), dt.Rows[0][8].ToString());
-
-                    navigationManager.NavigateTo("/dashboard");
+                    if (testing)
+                    {
+                        return await Task.FromResult(true);
+                    }
+                    else
+                    {
+                        ((CustomAuthenticationStateProvider)authenticationStateProvider).MarkUserAsAuthenticated(user.username, userId, roleId, companyId, dt.Rows[0][6].ToString(), dt.Rows[0][7].ToString(), dt.Rows[0][8].ToString());
+                        navigationManager.NavigateTo("/dashboard");
+                    }
                 }
             }
             else
             {
-                errorMessage = "Incorrect user name or password";
+                if (testing)
+                {
+                    return await Task.FromResult(false);
+                }
+                else
+                {
+                    errorMessage = "Incorrect user name or password";
+                }
             }
             //System.Diagnostics.Debug.Print("Hello");
         }
         else
         {
-            errorMessage = "Incorrect user name or password";
+            if (testing)
+            {
+                return await Task.FromResult(false);
+            }
+            else
+            {
+                errorMessage = "Incorrect user name or password";
+            }
         }
         return await Task.FromResult(true);
     }
