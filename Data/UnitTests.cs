@@ -13,6 +13,7 @@ namespace Web_Onboard.Data
         {
             LoginValidateValidUser();
             CompanyManagerTest();
+            UserManagerTest();
         }
 
         private async void LoginValidateValidUser()
@@ -43,6 +44,29 @@ namespace Web_Onboard.Data
             else
             {
                 outputs.Add("Failed: LoginValidateValidUser");
+            }
+
+        }
+        private void UserManagerTest()
+        {
+            UserManager userManager = new UserManager();
+            userManager.user.username = "TestUser";
+            userManager.user.firstname = "TestUser";
+            userManager.user.lastname = "TestUser";
+            userManager.user.email = "TestUser";
+            userManager.user.password = "TestUser";
+            userManager.user.role_id = "1";
+
+
+
+            userManager.UserAddedComplete();
+            if (userManager.errorMessage.Length > 1)
+            {
+                outputs.Add("Failed: UserAddedComplete");
+            }
+            else
+            {
+                outputs.Add("Success:UserAddedComplete");
             }
 
         }
