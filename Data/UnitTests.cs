@@ -12,6 +12,7 @@ namespace Web_Onboard.Data
         public UnitTests()
         {
             LoginValidateValidUser();
+            CompanyManagerTest();
         }
 
         private async void LoginValidateValidUser()
@@ -28,6 +29,22 @@ namespace Web_Onboard.Data
             {
                 outputs.Add("Failed: LoginValidateValidUser");
             }
+        }
+
+        private async void CompanyManagerTest()
+        {
+            CompanyManager companyManager = new CompanyManager();
+            byte[] a = { 0,1,1,0,1,0,0,0 };
+            string v = await companyManager.ToByte(a);
+            if (v.Length > 0)
+            {
+                outputs.Add("Success: LoginValidateValidUser");
+            }
+            else
+            {
+                outputs.Add("Failed: LoginValidateValidUser");
+            }
+
         }
     }
 }

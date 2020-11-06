@@ -158,11 +158,9 @@
     string toastMessage = "";
 
     DataTable dt = SortDataTable(Functions.GetDataTableFromSQL("SELECT * FROM [companies]"));
+    @*UnitTests.Unit;
+    Functions.*@
 
-    public void tester(object a)
-    {
-        Console.WriteLine(a);
-    }
 
     //Sorts the datatable alphabetically
     public static DataTable SortDataTable(DataTable dt)
@@ -173,7 +171,7 @@
     }
 
     //When a company from list is clicked
-    public void CompanyClicked(System.Data.DataRow a)
+    public async void CompanyClicked(System.Data.DataRow a)
     {
         //Determines if the company edit window is already open, if so it will close it
         if ((int)a[0] == prevEdit)
@@ -190,7 +188,7 @@
         //Determines which image to show
         if (a[2].ToString().Length > 0)
         {
-            imageURLFromEdited = ToByte((byte[])a[2]);
+            imageURLFromEdited = await ToByte((byte[])a[2]);
         }
         else
         {
@@ -344,7 +342,7 @@
     }
 
     //Determines what kind of file has been picked
-    private string GetFileType(string name)
+    public string GetFileType(string name)
     {
         string result = "";
         if (name.Contains("png") || name.Contains("jpg") || name.Contains("jpeg") || name.Contains("PNG") || name.Contains("JPG") || name.Contains("JPEG"))
@@ -359,9 +357,10 @@
     }
 
     //Converts varbinary to byte to be read for image display
-    public static String ToByte(Byte[] data)
+    public async Task<String> ToByte(Byte[] data)
     {
         return System.Text.Encoding.ASCII.GetString((byte[])data);
     }
+
 
 }
