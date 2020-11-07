@@ -225,8 +225,9 @@
         addButtonClicked = !addButtonClicked;
     }
     //Action for user insert button
-    public void UserAddedComplete(bool testing)
+    public int UserAddedComplete(bool testing)
     {
+        int insertedId = -1;
         resetMessages();
         if (String.IsNullOrWhiteSpace(user.username))
         {
@@ -242,7 +243,11 @@
         }
         else
         {
-            Functions.GetDataTableFromSQL($"INSERT INTO users(user_name, role_id, password, email, company_id, first_name, last_name) VALUES('{user.username}',{user.role_id},'{user.password}','{user.email}',{curCompany},'{user.firstname}','{user.lastname}')");
+            DataTable tempdt = Functions.GetDataTableFromSQL($"INSERT INTO users(user_name, role_id, password, email, company_id, first_name, last_name) output Inserted.ID VALUES('{user.username}',{user.role_id},'{user.password}','{user.email}',{curCompany},'{user.firstname}','{user.lastname}')");
+            if (tempdt.Rows.Count > 0)
+            {
+                insertedId = (int)tempdt.Rows[0][0];
+            }
             if (curRole == 0)
             {
                 dt = Functions.GetDataTableFromSQL("SELECT u.[id], u.[user_name], u.[role_id], u.[company_id], u.[email], c.[name] FROM [users] u left join [companies] c on u.company_id=c.id where u.[active]=1");
@@ -267,6 +272,7 @@
         {
             StateHasChanged();
         }
+        return insertedId;
     }
     public void UserClicked(System.Data.DataRow a)
     {
