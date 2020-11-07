@@ -12,6 +12,7 @@ namespace Web_Onboard.Data
         public UnitTests()
         {
             LoginValidateValidUser();
+            LoginValidateInvalidUser();
             CompanyManagerTest();
             UserManagerAddUserTest();
         }
@@ -29,6 +30,21 @@ namespace Web_Onboard.Data
             else
             {
                 outputs.Add("Failed: LoginValidateValidUser");
+            }
+        }
+        private async void LoginValidateInvalidUser()
+        {
+            Login login = new Login();
+            login.user.username = "noone";
+            login.user.password = "m23123";
+            bool loggedIn = await login.ValidateUser(true);
+            if (!loggedIn)
+            {
+                outputs.Add("Success: LoginValidateInvalidUser");
+            }
+            else
+            {
+                outputs.Add("Failed: LoginValidateInvalidUser");
             }
         }
 
