@@ -39,11 +39,11 @@ namespace Web_Onboard.Data
             string v = await companyManager.ToByte(a);
             if (v.Length > 0)
             {
-                outputs.Add("Success: LoginValidateValidUser");
+                outputs.Add("Success: CompanyManagerTest");
             }
             else
             {
-                outputs.Add("Failed: LoginValidateValidUser");
+                outputs.Add("Failed: CompanyManagerTest");
             }
 
         }
@@ -59,7 +59,7 @@ namespace Web_Onboard.Data
 
 
 
-            userManager.UserAddedComplete();
+            userManager.UserAddedComplete(true);
             if (userManager.errorMessage.Length > 1)
             {
                 outputs.Add("Failed: UserAddedComplete");

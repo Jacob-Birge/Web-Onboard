@@ -103,7 +103,7 @@
             <label style="width:100px; text-align:left;">Email:</label>
             <input type="text" style="width:150px; height:30px;" @bind="user.email">
             <br><br>
-            <button class="btn btn-success" @onclick="UserAddedComplete">Add</button>
+            <button class="btn btn-success" @onclick="(()=>UserAddedComplete(false))">Add</button>
         </EditForm>
     </div>
 }
@@ -225,7 +225,7 @@
         addButtonClicked = !addButtonClicked;
     }
     //Action for user insert button
-    public void UserAddedComplete()
+    public void UserAddedComplete(bool testing)
     {
         resetMessages();
         if (String.IsNullOrWhiteSpace(user.username))
@@ -263,7 +263,10 @@
             successMessage = "Successfull!";
         }
 
-        StateHasChanged();
+        if (!testing)
+        {
+            StateHasChanged();
+        }
     }
     public void UserClicked(System.Data.DataRow a)
     {
