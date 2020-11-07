@@ -13,7 +13,7 @@ namespace Web_Onboard.Data
         {
             LoginValidateValidUser();
             CompanyManagerTest();
-            UserManagerTest();
+            UserManagerAddUserTest();
         }
 
         private async void LoginValidateValidUser()
@@ -47,7 +47,7 @@ namespace Web_Onboard.Data
             }
 
         }
-        private void UserManagerTest()
+        private void UserManagerAddUserTest()
         {
             UserManager userManager = new UserManager();
             userManager.user.username = "TestUser";
@@ -68,6 +68,23 @@ namespace Web_Onboard.Data
             {
                 outputs.Add("Success:UserAddedComplete");
             }
+          
+        }
+        private void UserManagerUserNameExistTest()
+        {
+            UserManager userManager = new UserManager();
+            userManager.user.username = "TestUser";
+            UserManagerAddUserTest();
+            if (userManager.usernameExists(userManager.user.username, -1))
+            {
+                outputs.Add("Failed: User Name Exists");
+
+            }
+            else
+            {
+                outputs.Add("Success: User Name Uniqe");
+            }
+            
 
         }
     }
