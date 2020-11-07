@@ -51,11 +51,11 @@ namespace Web_Onboard.Data
         private async void CompanyManagerTest()
         {
             CompanyManager companyManager = new CompanyManager();
-            byte[] a = { 0,1,1,0,1,0,0,0 };
+            byte[] a = { 181, 235, 45 };
             string v = await companyManager.ToByte(a);
-            if (v.Length > 0)
+            if (v == "??-")
             {
-                outputs.Add("Success: CompanyManagerTest");
+                outputs.Add("Success: CompanyManagerTest" + v);
             }
             else
             {
