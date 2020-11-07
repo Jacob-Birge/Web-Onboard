@@ -49,6 +49,7 @@
 </head>
 <body>
     <app>
+        @*display the side navigation bar*@
         <div class="sidebar">
             <component type="typeof(NavMenuViewCaller)" render-mode="Server" />
         </div>
@@ -63,18 +64,20 @@
             </div>
             <div class="content px-4">
                 <h3>Custom Page Builder</h3>
+                @*allow cpma admin to switch companies*@
                 <div ID="upResults">
                     <div ID="lblResults" Class="result-box">@(Model.message)</div>
                     @if (Model.roleId == 0)
                     {
-                <div ID="pnlGlobal" Visible="false">
-                    <div style="font-size: 20px; margin: 0 10px 0 0; padding-top: 10px; float: left;">Change company:</div>
-                    @Html.DropDownList("companySelection", Model.companyListItems, new { @id="lbCompanies", @onchange = "changeCompany(this.value)", @style = "display:inline-block; margin:auto;" })
-                    <div style="float: right; color: #888; padding: 25px 0 0 0;">Global Admin Only</div>
-                </div>
+                        <div ID="pnlGlobal" Visible="false">
+                            <div style="font-size: 20px; margin: 0 10px 0 0; padding-top: 10px; float: left;">Change company:</div>
+                            @Html.DropDownList("companySelection", Model.companyListItems, new { @id="lbCompanies", @onchange = "changeCompany(this.value)", @style = "display:inline-block; margin:auto;" })
+                            <div style="float: right; color: #888; padding: 25px 0 0 0;">Global Admin Only</div>
+                        </div>
                     }
                 </div>
 
+                @*different messages to display to the user*@
                 <div id="errorMessage" class="alert alert-danger" style="display:none">
                     Failed to upload file.<br />
                     Please contact system administrator.
@@ -89,11 +92,13 @@
                     Successfully uploaded file.
                 </div>
 
+                @*field for filename and button for saving the file*@
                 <div style="text-align:center;margin:auto;">
                     <input type="text" class="form-control" id="filename" placeholder="File Name" style="display:inline; text-align:center; width: 25%; padding:0px 5px 0px 0px;">
                     <button class="btn btn-primary" onclick="genPDF();"> Save </button>
                 </div>
                 <br />
+                @*quill toolbar and editor*@
                 <div style="width: 8.3in;margin: auto;padding-bottom:20px;">
                     <div id="display"></div>
                     <div id="toolbar"></div>
@@ -162,6 +167,7 @@
         var companyIdStr = @Html.DisplayFor(model => model.companyId);
         var messageIds = ["errorMessage", "filenameMessage", "uploadingMessage", "successMessage"]
 
+        //call api to change the company stored in session
         function changeCompany(val) {
             var pathname = window.location.pathname;
             var handler = "?handler=CompanyChange";
@@ -177,12 +183,14 @@
             companyIdStr = val;
         }
 
+        //show the message with the given id
         function showMessage(elementId) {
             messageIds.forEach(function (item, index) {
                 showMessageHelper(item, elementId);
             });
         }
 
+        //helper used for iterating over messages to display
         function showMessageHelper(item, elementId) {
             if (elementId == item) {
                 document.getElementById(item).style.display = "block";
@@ -192,6 +200,8 @@
             }
         }
 
+        //helper for recursively making an api call to build up the html string on the server side
+        //and then makeing api call to save the html as a pdf in the database
         function requestHelper(html, filename) {
             var sendLimit = 1500;
             var xhttp = new XMLHttpRequest();
@@ -224,6 +234,7 @@
             }
         }
 
+        //validate input and make call to helper for converting the html into a pdf and saving it into the database
         function genPDF() {
             var filename = document.getElementById("filename").value;
             filename = filename.replace(".pdf", "");

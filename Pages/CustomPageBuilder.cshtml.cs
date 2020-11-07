@@ -23,6 +23,7 @@ namespace Web_Onboard.Pages
             _authStateProvider = (CustomAuthenticationStateProvider)authStateProvider;
         }
 
+        //initialize necessary data on page load
         public void OnGet()
         {
             companyId = _authStateProvider.getCompanyId();
@@ -42,11 +43,15 @@ namespace Web_Onboard.Pages
             }
             CommonInit();
         }
+
+        //switch the current company
         public void OnGetCompanyChange(string compId)
         {
             companyId = int.Parse(compId);
             CommonInit();
         }
+
+        //common initializer for setting up needed data
         private void CommonInit()
         {
             message = "Welcome to the custom page builder!";

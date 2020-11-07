@@ -8,6 +8,7 @@
 </div>
 
 <div class="main">
+    @*top status bar that includes the user's name, link to edit their profile, and link to logout*@
     <div class="top-row px-4">
         <div style="float:right; margin-top: .5rem; margin-bottom: 1rem;">
             <AuthorizeView>
@@ -26,10 +27,13 @@
 </div>
 
 @code{
+    //holds the first and last name of the user if stored in the database
     string name = "";
 
+    //initilizes data on page load
     protected override async Task OnInitializedAsync()
     {
+        //peice together name
         string first = ((CustomAuthenticationStateProvider)authenticationStateProvider).getFirstName();
         string last = ((CustomAuthenticationStateProvider)authenticationStateProvider).getLastName();
         if (string.IsNullOrWhiteSpace(first) && string.IsNullOrWhiteSpace(last))
@@ -46,6 +50,7 @@
         }
     }
 
+    //nice function wrapper for rerouting
     private void ButtonReroute(String path)
     {
         navigationManager.NavigateTo(path);

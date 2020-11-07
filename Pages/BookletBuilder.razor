@@ -27,9 +27,13 @@
 </style>
 
 <h3>Booklet Builder</h3>
+
+@*header information*@
 <div ID="upResults">
+    @*displays any set messages*@
     <div ID="lblResults" Class="result-box">@(message)</div>
 
+    @*allows a cpma admin to switch between different companies*@
     @if (curRole == 0)
     {
         <div ID="pnlGlobal" Visible="false">
@@ -56,10 +60,13 @@
 
 @if (curRole == 0)
 {
+    //user can upload pdfs
     <div style="margin:auto;text-align:center;">
         <InputFile OnChange="@OnInputFileChange" multiple />
         <button @onclick="SavePage" class="btn btn-primary">Upload Page</button>
     </div>
+
+    //display table of pages currently saved in the database
     <table style="margin: auto">
         <tr>
             <th>File Name</th>
@@ -69,11 +76,11 @@
             }
             <th></th>
         </tr>
+        @*display the filename and a button for adding to the booklet for each page in the database*@
         @foreach (Page item in AllPages)
         {
             @if (item != null && (curCompany == -1 || curCompany == item.Company_ID))
             {
-                //Users Table
                 <tr>
                     <td>@item.Name</td>
                     @if (curRole == 0 && curCompany == -1)
@@ -86,6 +93,8 @@
         }
     </table>
     <br />
+
+    //section for displaying error or success messages
     <div style="justify-content: center; align-items: center; text-align: center; width:auto; margin:auto;">
         @if (@errorMessage != "")
         {
@@ -100,6 +109,8 @@
             <br />
         }
     </div>
+
+    //display the currently added pages in a horizontal list that can be dragged and dropped to reposition
     @if (booklet.numPages() > 0)
     {
         <div style="justify-content: center; align-items: center; text-align: center; width:auto; margin:auto;">
@@ -150,6 +161,7 @@
 
     Booklet booklet = new Booklet();
 
+    //initilizes data on page load
     protected override async Task OnInitializedAsync()
     {
         curCompany = ((CustomAuthenticationStateProvider)authenticationStateProvider).getCompanyId();
@@ -168,6 +180,7 @@
         StateHasChanged();
     }
 
+    //gets all of the pages currently stored in the database
     public void updateAllPages()
     {
         if (curRole == 0)
@@ -196,6 +209,7 @@
         }
     }
 
+    //updates the session with the currently selected company
     public void CompanyChanged(ChangeEventArgs e)
     {
         curCompany = Int32.Parse(e.Value.ToString());
@@ -205,16 +219,19 @@
 
     int currentIndex;
 
+    //started to drag page in booklet list
     void StartDrag(Page item)
     {
         currentIndex = booklet.getIndex(item);
     }
 
+    //clicked page in booklet list
     void ClickItem(Page item)
     {
         currentIndex = booklet.getIndex(item);
     }
 
+    //dropped page in booklet list
     void Drop(Page item)
     {
         if (item != null)
@@ -233,6 +250,7 @@
         }
     }
 
+    //add a page to the booklet list
     void AddPage(string ID)
     {
         int index = AllPages.FindIndex(a => a.ID == ID);
@@ -249,6 +267,7 @@
         }
     }
 
+    //remove a page from the booklet list
     void RemovePage(MouseEventArgs e, Page item)
     {
         if (e.Button == 2 && item != null)
@@ -259,6 +278,7 @@
         }
     }
 
+    //save the booklet to the database
     void SaveBooklet()
     {
         if (SaveHelper() != -1)
@@ -267,6 +287,7 @@
         }
     }
 
+    //helper used for saving the booklet to the database
     int SaveHelper()
     {
         int insertedId = -1;
@@ -321,6 +342,7 @@
         return insertedId;
     }
 
+    //save the booklet to the database and call api to send to client to download
     async void DownloadBooklet()
     {
         int insertedId = SaveHelper();
@@ -330,11 +352,13 @@
         }
     }
 
+    //get selected files for uploading
     private void OnInputFileChange(IFileListEntry[] fileListEntries)
     {
         files = fileListEntries;
     }
 
+    //save an uploaded page to the database
     private async Task SavePage()
     {
         if (files == null)
@@ -365,6 +389,7 @@
         StateHasChanged();
     }
 
+    //class that stores all info associated with a booklet
     public class Booklet
     {
         [Required]
@@ -414,6 +439,7 @@
         }
     }
 
+    //class that stores all info associated with a page
     public class Page
     {
         public string ID { get; set; }

@@ -5,24 +5,27 @@
 @inject NavigationManager navigationManager
 @inject AuthenticationStateProvider authenticationStateProvider
 @inject IJSRuntime JSRuntime;
-
+@*show message while authorizing the user*@
 <AuthorizeView>
     <Authorizing>
         <p>Authorizing</p>
     </Authorizing>
 </AuthorizeView>
+@*show cpma admin a welcome message*@
 <AuthorizeView Roles="Owner">
     <Authorized>
         <h3>Dashboard</h3>
         <h1 style="text-align:center;">Hello@(String.IsNullOrWhiteSpace(firstname) ? "" : ", " + firstname)</h1>
     </Authorized>
 </AuthorizeView>
+@*show hiring manager a welcome message*@
 <AuthorizeView Roles="Manager">
     <Authorized>
         <h3>Dashboard</h3>
         <h1 style="text-align:center;">Hello@(String.IsNullOrWhiteSpace(firstname) ? "" : ", " + firstname)</h1>
     </Authorized>
 </AuthorizeView>
+@*show new hire a welcome message allow them to download any booklets assign to them*@
 <AuthorizeView Roles="BaseUser">
     <Authorized>
         <div style="text-align:center;">
@@ -57,6 +60,7 @@
         </div>
     </Authorized>
 </AuthorizeView>
+@*allow unit tester to run unit tests and display their results*@
 <AuthorizeView Roles="UnitTester">
     <Authorized>
         <div style="text-align:center;">
@@ -88,6 +92,7 @@
     DataTable dt = new DataTable();
     private List<string> testOutputs = new List<string>();
 
+    //initilizes data on page load
     protected override async Task OnInitializedAsync()
     {
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
@@ -104,6 +109,7 @@
         }
     }
 
+    //call api to download 
     async void DownloadBooklet(int id)
     {
         try

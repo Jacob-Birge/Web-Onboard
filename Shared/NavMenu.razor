@@ -5,8 +5,10 @@
     </button>
 </div>
 
+@*list of links that a user can visit on their dashboard depending on their role*@
 <div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
     <ul class="nav flex-column">
+        @*any authorized user can see this*@
         <AuthorizeView>
             <Authorized>
                 <li class="nav-item px-3">
@@ -16,6 +18,7 @@
                 </li>
             </Authorized>
         </AuthorizeView>
+        @*any cpma admin user can see this*@
         <AuthorizeView Roles="Owner">
             <Authorized>
                 <li class="nav-item px-3">
@@ -25,6 +28,7 @@
                 </li>
             </Authorized>
         </AuthorizeView>
+        @*any cpma admin or hiring manager user can see this*@
         <AuthorizeView Roles="Owner, Manager">
             <Authorized>
                 <li class="nav-item px-3">
@@ -49,6 +53,7 @@
                 </li>
             </Authorized>
         </AuthorizeView>
+        @*any cpma admin user can see this*@
         <AuthorizeView Roles="Owner">
             <Authorized>
                 <li class="nav-item px-3">

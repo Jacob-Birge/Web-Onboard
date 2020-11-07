@@ -3,6 +3,7 @@
 
 <div class="main">
     <div class="top-row px-4">
+        @*top status bar that includes the website name, cpma logo, and either a link to login or link to the logged in user's dashboard*@
         <div style="float:left; margin-top: .5rem; margin-bottom: .5rem;">
             <a href="/" style="text-decoration:none;">
                 <img src="Images/cp-ma-logo.png" style="height: 40px;" alt="CP-MA" />
@@ -27,6 +28,7 @@
 </div>
 
 @code {
+    //nice function wrapper for rerouting
     private void ButtonReroute(String path)
     {
         navigationManager.NavigateTo(path);

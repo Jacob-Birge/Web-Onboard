@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Web_Onboard.Pages;
+using System.Data;
 
 namespace Web_Onboard.Data
 {
@@ -55,7 +56,7 @@ namespace Web_Onboard.Data
             string v = await companyManager.ToByte(a);
             if (v == "??-")
             {
-                outputs.Add("Success: CompanyManagerTest" + v);
+                outputs.Add("Success: CompanyManagerTest");
             }
             else
             {
@@ -67,37 +68,31 @@ namespace Web_Onboard.Data
         {
             UserManager userManager = new UserManager();
             userManager.user.username = "TestUser";
-            userManager.user.firstname = "TestUser";
-            userManager.user.lastname = "TestUser";
-            userManager.user.email = "TestUser";
             userManager.user.password = "TestUser";
             userManager.user.role_id = "1";
 
-
-
             int UserID = await userManager.UserAddedComplete(true);
-            if (userManager.errorMessage.Length > 1)
+            DataTable testDt = Functions.GetDataTableFromSQL($"select id from users where id = {UserID}");
+            if (testDt.Rows.Count > 0)
+            {
+                outputs.Add("Success: UserAddedComplete");
+            }
+            else
             {
                 outputs.Add("Failed: UserAddedComplete");
             }
-            else
-            {
-                outputs.Add("Success:UserAddedComplete");
-            }
             userManager.editedName = "Test";
-            userManager.editedRoleID = 1;
-            userManager.editedEmail = "Test@test.com";
             userManager.UserEdited(UserID, true);
-            if (userManager.errorMessage.Length > 1)
-            {
-                outputs.Add("Failed: User Edit");
-            }
-            else
+            testDt = Functions.GetDataTableFromSQL($"select [user_name] from users where id = {UserID}");
+            if (testDt.Rows.Count > 0 && testDt.Rows[0][0].ToString() == "Test")
             {
                 outputs.Add("Success: User Edit");
             }
+            else
+            {
+                outputs.Add("Failed: User Edit");
+            }
             Functions.GetDataTableFromSQL($"Delete from users where id = {UserID}");
-
         }
      
     }
