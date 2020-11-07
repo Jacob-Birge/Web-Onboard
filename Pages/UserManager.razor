@@ -159,8 +159,8 @@
                             </div>
                         </div>
                         <div style="margin-top: 20px; margin-bottom: 30px;">
-                            <button class="btn btn-success" @onclick="(e => UserEdited((int)dr[0]))">Update</button>
-                            <button style="margin-left: 20px" class="btn btn-danger" @onclick="(e => UserDeleted((int)dr[0]))">Delete</button>
+                            <button class="btn btn-success" @onclick="(()=>UserEdited((int)dr[0],false))">Update</button>
+                            <button style="margin-left: 20px" class="btn btn-danger" @onclick="(()=> UserDeleted((int)dr[0],false))">Delete</button>
                         </div>
                     }
                     <hr style="width: 100%; margin-left: auto; margin-right: auto; height: 1px; background-color: #667; opacity: 0.5; " />
@@ -196,6 +196,7 @@
     public string editedEmail = "";
     public int editedRoleID = 999;
     public string roleName = "";
+    public bool test = false;
 
     //This runs at the benginning of the program
     protected override async Task OnInitializedAsync()
@@ -225,7 +226,7 @@
         addButtonClicked = !addButtonClicked;
     }
     //Action for user insert button
-    public int UserAddedComplete(bool testing)
+    public  async Task <int> UserAddedComplete(bool testing)
     {
         int insertedId = -1;
         resetMessages();
@@ -304,7 +305,7 @@
         StateHasChanged();
     }
     //When user is finished editing and click "Edit User" button
-    public void UserEdited(int UserID)
+    public void UserEdited(int UserID,bool testing)
     {
         resetMessages();
         //if they have not added a name, do nothing
@@ -349,12 +350,16 @@
         userSelected = 0;
         prevClicked = 0;
 
-        StateHasChanged();
+        if (!testing)
+        {
+            StateHasChanged();
+        }
     }
-    public void UserDeleted(int userID)
+    public void UserDeleted(int userID, bool testing)
     {
         resetMessages();
         Functions.GetDataTableFromSQL($"update [users] set [active]=0 WHERE [id] = '{userID}'");
+       
 
         int rowIndex = -1;
         for (int i = 0; i < dt.Rows.Count; i++)
@@ -365,14 +370,21 @@
                 break;
             }
         }
-
+        if (rowIndex == -1)
+        {
+            errorMessage = "Did Not Delete Correctly";
+        }
         dt.Rows.RemoveAt(rowIndex);
+
 
         editedName = "";
         userSelected = 0;
         showModal = false;
 
-        StateHasChanged();
+        if (!testing)
+        {
+            StateHasChanged();
+        }
     }
     //Fucntion to check if the username exists in the database
     public bool usernameExists(string username, int UserId = -1)

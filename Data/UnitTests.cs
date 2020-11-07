@@ -47,7 +47,7 @@ namespace Web_Onboard.Data
             }
 
         }
-        private void UserManagerAddUserTest()
+        private async void UserManagerAddUserTest()
         {
             UserManager userManager = new UserManager();
             userManager.user.username = "TestUser";
@@ -59,7 +59,7 @@ namespace Web_Onboard.Data
 
 
 
-            userManager.UserAddedComplete(true);
+            int UserID = await userManager.UserAddedComplete(true);
             if (userManager.errorMessage.Length > 1)
             {
                 outputs.Add("Failed: UserAddedComplete");
@@ -68,24 +68,21 @@ namespace Web_Onboard.Data
             {
                 outputs.Add("Success:UserAddedComplete");
             }
-          
-        }
-        private void UserManagerUserNameExistTest()
-        {
-            UserManager userManager = new UserManager();
-            userManager.user.username = "TestUser";
-            UserManagerAddUserTest();
-            if (userManager.usernameExists(userManager.user.username, -1))
+            userManager.editedName = "Test";
+            userManager.editedRoleID = 1;
+            userManager.editedEmail = "Test@test.com";
+            userManager.UserEdited(UserID, true);
+            if (userManager.errorMessage.Length > 1)
             {
-                outputs.Add("Failed: User Name Exists");
-
+                outputs.Add("Failed: User Edit");
             }
             else
             {
-                outputs.Add("Success: User Name Uniqe");
+                outputs.Add("Success: User Edit");
             }
-            
+            Functions.GetDataTableFromSQL($"Delete from users where id = {UserID}");
 
         }
+     
     }
 }
