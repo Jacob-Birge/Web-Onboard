@@ -5,6 +5,8 @@
 @inject AuthenticationStateProvider authenticationStateProvider
 @inject Blazored.SessionStorage.ISessionStorageService sessionStorage
 
+@*simple page that logs out a user and immediately redirects them to the splash page*@
+
 @code {
     protected override Task OnInitializedAsync()
     {

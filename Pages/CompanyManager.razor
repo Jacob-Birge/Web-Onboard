@@ -171,7 +171,7 @@
     }
 
     //When a company from list is clicked
-    public async void CompanyClicked(System.Data.DataRow a)
+    public void CompanyClicked(System.Data.DataRow a)
     {
         //Determines if the company edit window is already open, if so it will close it
         if ((int)a[0] == prevEdit)
@@ -188,7 +188,7 @@
         //Determines which image to show
         if (a[2].ToString().Length > 0)
         {
-            imageURLFromEdited = await ToByte((byte[])a[2]);
+            imageURLFromEdited = ToByte((byte[])a[2]);
         }
         else
         {
@@ -357,7 +357,7 @@
     }
 
     //Converts varbinary to byte to be read for image display
-    public async Task<String> ToByte(Byte[] data)
+    public String ToByte(Byte[] data)
     {
         return System.Text.Encoding.ASCII.GetString((byte[])data);
     }

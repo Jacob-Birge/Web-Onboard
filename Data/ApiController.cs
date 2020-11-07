@@ -34,7 +34,6 @@ namespace Web_Onboard.Data
         [HttpGet]
         public int SaveCustomPdf(string html, string filename, int companyid)
         {
-            //System.Diagnostics.Debug.Print(companyId.ToString());
             int id = -1;
             fullHtml += html;
             SavePdfInDB(filename, companyid);

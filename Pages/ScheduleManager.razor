@@ -90,6 +90,7 @@
 
     private string scheduletemplate = "";
 
+    //initialize data on page load
     protected override async Task OnInitializedAsync()
     {
         curCompany = ((CustomAuthenticationStateProvider)authenticationStateProvider).getCompanyId();
@@ -109,6 +110,7 @@
         StateHasChanged();
     }
 
+    //function for initializing template so that it can be collapsed
     private void initTemplate()
     {
         scheduletemplate = "<div style='width:11.685in;'><div class='print-page' style='margin:.75in .25in 0in .2in'>" +
@@ -192,6 +194,7 @@
             "<div style='flex:1 1 0px;padding-top:.2in;font-size:20px'></div><div style='flex:1 1 0px;text-align:right'>Commumication Performance Management Associates</div></div></div></div></div>";
     }
 
+    //save the schedule to the database
     void SaveSchedule()
     {
         if (String.IsNullOrWhiteSpace(filename))
@@ -224,6 +227,7 @@
         catch { errorMessage = "Failed to save schedule"; }
     }
 
+    //change the current company
     public async void CompanyChanged(ChangeEventArgs e)
     {
         curCompany = Int32.Parse(e.Value.ToString());

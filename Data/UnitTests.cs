@@ -7,6 +7,7 @@ using System.Data;
 
 namespace Web_Onboard.Data
 {
+    //class used for implementing and calling unit tests
     public class UnitTests
     {
         public List<string> outputs = new List<string>();
@@ -49,11 +50,11 @@ namespace Web_Onboard.Data
             }
         }
 
-        private async void CompanyManagerTest()
+        private void CompanyManagerTest()
         {
             CompanyManager companyManager = new CompanyManager();
             byte[] a = { 181, 235, 45 };
-            string v = await companyManager.ToByte(a);
+            string v = companyManager.ToByte(a);
             if (v == "??-")
             {
                 outputs.Add("Success: CompanyManagerTest");
@@ -64,14 +65,14 @@ namespace Web_Onboard.Data
             }
 
         }
-        private async void UserManagerAddUserTest()
+        private void UserManagerAddUserTest()
         {
             UserManager userManager = new UserManager();
             userManager.user.username = "TestUser";
             userManager.user.password = "TestUser";
             userManager.user.role_id = "1";
 
-            int UserID = await userManager.UserAddedComplete(true);
+            int UserID = userManager.UserAddedComplete(true);
             DataTable testDt = Functions.GetDataTableFromSQL($"select id from users where id = {UserID}");
             if (testDt.Rows.Count > 0)
             {

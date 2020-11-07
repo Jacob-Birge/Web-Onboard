@@ -8,6 +8,7 @@
 
 <h3>Login</h3>
 
+@*form for logging into the website*@
 <div id="frmMain" style="background-color: #eee; height: 100%; width: 100%;">
     <div style="width: 400px; height: 500px; margin: auto; padding-top:60px;">
         <h1 style="color: #555; font-weight: 100; letter-spacing: 4px; vertical-align: top; margin-bottom: -5px;">
@@ -52,6 +53,7 @@
     public User user = new User();
     private string errorMessage = "";
 
+    //initialize data on page load
     protected override async Task OnInitializedAsync()
     {
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
@@ -61,6 +63,7 @@
         }
     }
 
+    //validate the inputted username and password
     public async Task<bool> ValidateUser(bool testing)
     {
         DataTable dt = Functions.GetDataTableFromSQL("SELECT [id], [role_id], [company_id], [user_name], [password], [reset_pass], [first_name], [last_name], [email] FROM [users] WHERE [user_name] = '" + user.username + "' AND [password] = '" + user.password + "'");
@@ -110,7 +113,6 @@
                     errorMessage = "Incorrect user name or password";
                 }
             }
-            //System.Diagnostics.Debug.Print("Hello");
         }
         else
         {
@@ -126,6 +128,7 @@
         return await Task.FromResult(true);
     }
 
+    //class for holding the information used in the form
     public class User
     {
         [Required]
