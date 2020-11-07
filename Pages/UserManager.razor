@@ -172,30 +172,30 @@
 
 
 @code{
-    private AddUser user = new AddUser();
-    private string errorMessage = "";
-    private string successMessage = "";
+    public AddUser user = new AddUser();
+    public string errorMessage = "";
+    public string successMessage = "";
     public string message = "Welcome to the user manager!";
-    private DataTable dt;
-    private DataTable companies_dt;
-    private DataTable companies_dt_joined;
+    public DataTable dt;
+    public DataTable companies_dt;
+    public DataTable companies_dt_joined;
 
-    private int curCompany = -1;
-    private int curRole = -1;
-    private int curUserId = -1;
-    private bool addButtonClicked = false;
+    public int curCompany = -1;
+    public int curRole = -1;
+    public int curUserId = -1;
+    public bool addButtonClicked = false;
     //validate if the role id is not 0,1,2
-    private int rowcount = 0;
-    private int userTobeDeleted = 0;
-    private string userTobeDeletedName = "";
-    private bool showModal = false;
-    private int userSelected = 0;
-    private int prevClicked = 0;
-    private int companyIDclicked = 0;
-    private string editedName = "";
-    private string editedEmail = "";
-    private int editedRoleID = 999;
-    private string roleName = "";
+    public int rowcount = 0;
+    public int userTobeDeleted = 0;
+    public string userTobeDeletedName = "";
+    public bool showModal = false;
+    public int userSelected = 0;
+    public int prevClicked = 0;
+    public int companyIDclicked = 0;
+    public string editedName = "";
+    public string editedEmail = "";
+    public int editedRoleID = 999;
+    public string roleName = "";
 
     //This runs at the benginning of the program
     protected override async Task OnInitializedAsync()
@@ -366,7 +366,7 @@
         StateHasChanged();
     }
     //Fucntion to check if the username exists in the database
-    private bool usernameExists(string username, int UserId = -1)
+    public bool usernameExists(string username, int UserId = -1)
     {
         DataTable testDt;
         if (UserId == -1)
